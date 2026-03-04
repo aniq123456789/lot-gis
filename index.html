@@ -18,138 +18,229 @@
             html, body {
                 height: 100%;
                 margin: 0;
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                overflow: hidden;
             }
             
             /* Header Section */
             header {
                 height: 70px;
-                background: #2c3e50;
+                background: #1a252f;
                 color: white;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 0 20px;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                padding: 0 25px;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.4);
                 z-index: 1100;
                 position: relative;
             }
 
-            header .title-area { display: flex; align-items: center; gap: 15px; }
-            header h1 { margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px; }
-            header img { height: 50px; background: white; border-radius: 5px; padding: 2px; }
+            .header-left {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
 
-            #main-container { display: flex; height: calc(100% - 70px); }
+            header img {
+                height: 50px;
+                width: auto;
+                background: white;
+                padding: 3px;
+                border-radius: 4px;
+            }
 
-            /* Sidebar Menu */
+            .separator {
+                width: 2px;
+                height: 30px;
+                background: rgba(255,255,255,0.3);
+            }
+
+            header h1 {
+                margin: 0;
+                font-size: 20px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: #ecf0f1;
+            }
+
+            .system-tag {
+                background: #3498db;
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: bold;
+            }
+
+            /* Container Layout */
+            #main-container {
+                display: flex;
+                height: calc(100% - 70px);
+            }
+
+            /* Sidebar */
             #sidebar {
-                width: 300px;
-                background: #f8f9fa;
+                width: 320px;
+                background: #f4f7f6;
                 border-right: 1px solid #ddd;
                 padding: 20px;
                 overflow-y: auto;
                 display: flex;
                 flex-direction: column;
-                gap: 20px;
+                gap: 15px;
+                z-index: 1000;
             }
 
-            #map { flex-grow: 1; height: 100%; }
+            #map {
+                flex-grow: 1;
+                height: 100%;
+            }
 
+            /* Menu Styling */
             .menu-section {
                 background: white;
                 padding: 15px;
                 border-radius: 8px;
-                border: 1px solid #eee;
+                border: 1px solid #e0e0e0;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             }
 
-            .menu-section h4 { margin: 0 0 10px 0; font-size: 14px; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+            .menu-section h4 {
+                margin: 0 0 12px 0;
+                font-size: 14px;
+                color: #2c3e50;
+                border-bottom: 2px solid #3498db;
+                padding-bottom: 5px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
             
-            select, button, input {
+            select, button, input[type="range"] {
                 width: 100%;
-                padding: 10px;
                 margin-top: 5px;
+            }
+
+            select {
+                padding: 10px;
                 border-radius: 4px;
                 border: 1px solid #ccc;
-                box-sizing: border-box;
             }
 
             button {
+                padding: 12px;
                 background-color: #3498db;
                 color: white;
                 border: none;
+                border-radius: 4px;
                 font-weight: bold;
                 cursor: pointer;
                 transition: 0.3s;
+                margin-top: 10px;
             }
 
             button:hover { background-color: #2980b9; }
-            .btn-pdf { background-color: #e74c3c; margin-top: 10px; }
+
+            .btn-pdf {
+                background-color: #e74c3c;
+            }
+
             .btn-pdf:hover { background-color: #c0392b; }
 
-            .slider-label { display: flex; justify-content: space-between; font-size: 12px; margin-top: 10px; }
-
-            /* Basemap Switcher Custom Style */
+            /* Interface Switcher */
             .basemap-card {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 10px;
-                margin-top: 10px;
             }
+
             .basemap-opt {
-                font-size: 11px;
+                font-size: 12px;
                 text-align: center;
                 cursor: pointer;
                 border: 2px solid #eee;
-                padding: 5px;
-                border-radius: 5px;
+                padding: 8px;
+                border-radius: 6px;
+                transition: 0.2s;
             }
-            .basemap-opt.active { border-color: #3498db; background: #ebf5fb; }
 
-            @media print { .no-print { display: none !important; } }
+            .basemap-opt:hover { background: #f9f9f9; }
+
+            .basemap-opt.active {
+                border-color: #3498db;
+                background: #ebf5fb;
+                font-weight: bold;
+            }
+
+            .slider-label {
+                display: flex;
+                justify-content: space-between;
+                font-size: 11px;
+                color: #7f8c8d;
+                margin-top: 5px;
+            }
+
+            @media print {
+                .no-print { display: none !important; }
+                #sidebar { display: none; }
+                header { display: none; }
+                #main-container { height: 100%; width: 100%; }
+            }
         </style>
     </head>
     <body>
 
         <header class="no-print">
-            <div class="title-area">
+            <div class="header-left">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Logo_Politeknik_Ungku_Omar.png" alt="Logo PUO">
+                <div class="separator"></div>
                 <h1>Cempaka Digital Resident</h1>
             </div>
-            <div style="font-size: 12px; opacity: 0.8;">Land Explorer System v1.0</div>
+            <div class="header-right">
+                <div class="system-tag">PUO GEOMATICS</div>
+            </div>
         </header>
 
         <div id="main-container">
             <div id="sidebar" class="no-print">
                 
                 <div class="menu-section">
-                    <h4><i class="fa fa-search"></i> Land Explorer</h4>
-                    <label style="font-size: 12px;">Cari & Pergi Ke Lot:</label>
+                    <h4><i class="fas fa-search-location"></i> Land Explorer</h4>
+                    <label style="font-size: 12px; color: #666;">Pilih atau Cari Nombor Lot:</label>
                     <select id="lotSelector">
-                        <option value="">-- Pilih Nombor Lot --</option>
+                        <option value="">-- Sila Pilih Lot --</option>
                     </select>
-                    <button class="btn-pdf" id="generateLotPDF">Generate PDF Lot Ini</button>
+                    <button class="btn-pdf" id="generateLotPDF">
+                        <i class="fas fa-file-pdf"></i> Generate PDF Lot Ini
+                    </button>
                 </div>
 
                 <div class="menu-section">
-                    <h4><i class="fa fa-layer-group"></i> Interface Layer</h4>
+                    <h4><i class="fas fa-map"></i> Interface Layer</h4>
                     <div class="basemap-card">
-                        <div class="basemap-opt active" onclick="changeBasemap('sat')">Satellite</div>
-                        <div class="basemap-opt" onclick="changeBasemap('street')">Street View</div>
+                        <div id="btn-sat" class="basemap-opt active" onclick="changeBasemap('sat')">
+                            <i class="fas fa-satellite"></i><br>Satellite
+                        </div>
+                        <div id="btn-street" class="basemap-opt" onclick="changeBasemap('street')">
+                            <i class="fas fa-road"></i><br>Street View
+                        </div>
                     </div>
                 </div>
 
                 <div class="menu-section">
-                    <h4><i class="fa fa-adjust"></i> Lot Opacity</h4>
+                    <h4><i class="fas fa-adjust"></i> Lot Opacity</h4>
                     <input type="range" id="opacitySlider" min="0" max="1" step="0.1" value="0.2">
                     <div class="slider-label">
-                        <span>Transparent</span>
-                        <span>Solid</span>
+                        <span>Nipis</span>
+                        <span>Pekat</span>
                     </div>
                 </div>
 
-                <div style="margin-top: auto; font-size: 10px; color: #95a5a6; text-align: center;">
-                    &copy; 2024 Politeknik Ungku Omar<br>Geomatics Department
+                <div style="margin-top: auto; font-size: 10px; color: #95a5a6; text-align: center; line-height: 1.4;">
+                    Sistem Pemetaan Digital<br>
+                    <strong>Politeknik Ungku Omar</strong><br>
+                    © 2026 Geomatics Dept.
                 </div>
             </div>
 
@@ -168,35 +259,42 @@
         <script src="data/TANDASEMPADANCAMPUR_1.js"></script>
         
         <script>
+            // Inisialisasi Peta
             var map = L.map('map', {
                 zoomControl:true, 
                 maxZoom:28, 
                 minZoom:1
             }).fitBounds([[2.1037736019943134,102.52127453712016],[2.103942975429596,102.52154860320705]]);
 
-            // --- Basemaps ---
+            // --- Definisi Basemap ---
             var layer_GoogleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-                maxNativeZoom: 20, maxZoom: 28, attribution: 'Google Satellite'
+                maxNativeZoom: 20, 
+                maxZoom: 28, 
+                attribution: 'Google Satellite'
             }).addTo(map);
 
             var layer_GoogleStreet = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-                maxNativeZoom: 20, maxZoom: 28, attribution: 'Google Street'
+                maxNativeZoom: 20, 
+                maxZoom: 28, 
+                attribution: 'Google Street'
             });
 
+            // Fungsi Tukar Basemap
             function changeBasemap(type) {
                 if(type === 'sat') {
                     map.addLayer(layer_GoogleSatellite);
                     map.removeLayer(layer_GoogleStreet);
+                    document.getElementById('btn-sat').classList.add('active');
+                    document.getElementById('btn-street').classList.remove('active');
                 } else {
                     map.addLayer(layer_GoogleStreet);
                     map.removeLayer(layer_GoogleSatellite);
+                    document.getElementById('btn-street').classList.add('active');
+                    document.getElementById('btn-sat').classList.remove('active');
                 }
-                // Update UI buttons
-                document.querySelectorAll('.basemap-opt').forEach(el => el.classList.remove('active'));
-                event.currentTarget.classList.add('active');
             }
 
-            // --- Lot Layer ---
+            // --- Layer Lot (GeoJSON) ---
             function style_LOT(feature) {
                 return {
                     pane: 'pane_LOTFINAL_0',
@@ -204,7 +302,7 @@
                     color: 'yellow',
                     weight: 2.0, 
                     fill: true,
-                    fillOpacity: 0.2, // Default
+                    fillOpacity: 0.2, 
                     fillColor: 'rgba(133,182,111,1.0)',
                     interactive: true
                 };
@@ -217,9 +315,13 @@
                 pane: 'pane_LOTFINAL_0',
                 style: style_LOT,
                 onEachFeature: function(feature, layer) {
-                    var popup = '<b>LOT:</b> ' + feature.properties['NO LOT'] + '<br><b>AREA:</b> ' + feature.properties['AREA'];
+                    var popup = '<div style="font-family: Arial;">' +
+                                '<h3 style="margin:0 0 5px 0; color:#2980b9;">Maklumat Lot</h3>' +
+                                '<b>NO LOT:</b> ' + feature.properties['NO LOT'] + '<br>' +
+                                '<b>AREA:</b> ' + feature.properties['AREA'] + ' m²</div>';
                     layer.bindPopup(popup);
                     
+                    // Isi dropdown Lot Selector
                     if (feature.properties['NO LOT']) {
                         var select = document.getElementById('lotSelector');
                         var option = document.createElement('option');
@@ -230,25 +332,25 @@
                 }
             }).addTo(map);
 
-            // --- Opacity Control Function ---
+            // --- Kawalan Opacity ---
             document.getElementById('opacitySlider').addEventListener('input', function(e) {
                 var val = e.target.value;
                 layer_LOTFINAL_0.setStyle({ fillOpacity: val });
             });
 
-            // --- Land Explorer Jump to Lot ---
+            // --- Land Explorer: Pergi ke Lot ---
             document.getElementById('lotSelector').addEventListener('change', function(e) {
                 var val = e.target.value;
                 if (!val) return;
                 layer_LOTFINAL_0.eachLayer(function(layer) {
                     if (layer.feature.properties['NO LOT'] == val) {
-                        map.fitBounds(layer.getBounds());
+                        map.fitBounds(layer.getBounds(), {padding: [50, 50]});
                         layer.openPopup();
                     }
                 });
             });
 
-            // --- Generate PDF for Selected Lot ---
+            // --- Fungsi Generate PDF Khusus ---
             document.getElementById('generateLotPDF').addEventListener('click', function() {
                 var selectedLot = document.getElementById('lotSelector').value;
                 if (!selectedLot) {
@@ -256,24 +358,25 @@
                     return;
                 }
 
-                // Sediakan UI untuk Print
                 const element = document.getElementById('map');
                 const opt = {
-                    margin: 0.5,
-                    filename: 'Report_Lot_' + selectedLot + '.pdf',
+                    margin: 0.3,
+                    filename: 'Pelan_Lot_' + selectedLot + '.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { scale: 2, useCORS: true },
                     jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
                 };
 
-                // Generate PDF
+                // Beri sedikit masa untuk popup stabil sebelum print
                 html2pdf().set(opt).from(element).save();
             });
 
-            // Skala & Street View Context Menu
+            // Tambah Skala
             L.control.scale({position: 'bottomleft'}).addTo(map);
+
+            // Klik Kanan untuk Google Maps / Street View
             map.on('contextmenu', function(e) {
-                window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${e.latlng.lat},${e.latlng.lng}`, '_blank');
+                window.open(`https://www.google.com/maps?q=${e.latlng.lat},${e.latlng.lng}`, '_blank');
             });
 
         </script>
