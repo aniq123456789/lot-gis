@@ -59,7 +59,6 @@
 
         button:hover { background-color: #27ae60; }
         
-        /* Sembunyikan elemen semasa print ke PDF */
         .no-print { display: block; }
         </style>
         <title>Peta Interaktif - Saujana Putra Smart Resident</title>
@@ -97,23 +96,29 @@
         <script src="data/TANDASEMPADANCAMPUR_1.js"></script>
         
         <script>
-        var highlightLayer;
-        function highlightFeature(e) {
-            highlightLayer = e.target;
-            highlightLayer.openPopup();
-        }
-        
         var map = L.map('map', {
             zoomControl:true, maxZoom:28, minZoom:1
         }).fitBounds([[2.1037736019943134,102.52127453712016],[2.103942975429596,102.52154860320705]]);
         
         var hash = new L.Hash(map);
 
-        // --- BASE LAYERS ---
+        // --- DEFINISI BASE LAYERS ---
         var layer_GoogleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
             opacity: 1.0,
             attribution: '© Google Satellite'
         });
+
+        var layer_GoogleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            opacity: 1.0,
+            attribution: '© Google Hybrid'
+        });
+
+        var layer_OSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            opacity: 1.0,
+            attribution: '© OpenStreetMap'
+        });
+
+        // Setel satelit sebagai default
         map.addLayer(layer_GoogleSatellite);
 
         // --- LAYER LOT ---
@@ -139,7 +144,6 @@
                 var popupContent = '<b>LOT:</b> ' + feature.properties['NO LOT'] + '<br><b>AREA:</b> ' + feature.properties['AREA'];
                 layer.bindPopup(popupContent);
                 
-                // Isi dropdown secara automatik
                 if (feature.properties['NO LOT']) {
                     var select = document.getElementById('lotSelector');
                     var option = document.createElement('option');
@@ -151,11 +155,23 @@
         });
         map.addLayer(layer_LOTFINAL_0);
 
-        // --- FUNGSI PILIH LOT DARI DROPDOWN ---
+        // --- KAWALAN LAPISAN (LAYER CONTROL) ---
+        var baseMaps = {
+            "Satelit (Google)": layer_GoogleSatellite,
+            "Hybrid (Google)": layer_GoogleHybrid,
+            "Peta Jalan (OSM)": layer_OSM
+        };
+
+        var overlayMaps = {
+            "Sempadan Lot": layer_LOTFINAL_0
+        };
+
+        L.control.layers(baseMaps, overlayMaps, {collapsed: true}).addTo(map);
+
+        // --- FUNGSI PILIH LOT ---
         document.getElementById('lotSelector').addEventListener('change', function(e) {
             var val = e.target.value;
             if (!val) return;
-
             layer_LOTFINAL_0.eachLayer(function(layer) {
                 if (layer.feature.properties['NO LOT'] == val) {
                     map.fitBounds(layer.getBounds());
@@ -164,14 +180,11 @@
             });
         });
 
-        // --- FUNGSI DOWNLOAD PDF ---
+        // --- FUNGSI PDF ---
         function downloadPDF() {
             const element = document.getElementById('map');
             const panel = document.getElementById('ui-panel');
-            
-            // Sembunyikan panel kawalan sekejap supaya tidak masuk dalam PDF
             panel.style.display = 'none';
-
             const opt = {
                 margin: 0.5,
                 filename: 'Peta_Saujana_Putra.pdf',
@@ -179,15 +192,14 @@
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
             };
-
             html2pdf().set(opt).from(element).save().then(() => {
-                panel.style.display = 'flex'; // Tunjukkan balik panel
+                panel.style.display = 'flex';
             });
         }
 
-        // Street View Context Menu
+        // Street View Context Menu (Klik Kanan)
         map.on('contextmenu', function(e) {
-            window.open(`http://maps.google.com/maps?q=&layer=c&cbll=${e.latlng.lat},${e.latlng.lng}`, '_blank');
+            window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${e.latlng.lat},${e.latlng.lng}`, '_blank');
         });
 
         </script>
