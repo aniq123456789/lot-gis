@@ -23,7 +23,7 @@
             margin: 0;
         }
         
-        /* Panel Kawalan Kustom */
+        /* Panel Kawalan */
         .custom-panel {
             position: absolute;
             top: 10px;
@@ -40,13 +40,14 @@
             max-width: 250px;
         }
 
-        .custom-panel h4 { margin: 0 0 5px 0; font-size: 14px; }
+        .custom-panel h4 { margin: 0 0 5px 0; font-size: 14px; color: #2c3e50; }
         
         select, button {
             padding: 8px;
             border-radius: 4px;
             border: 1px solid #ccc;
             cursor: pointer;
+            font-size: 13px;
         }
 
         button {
@@ -97,25 +98,36 @@
         
         <script>
         var map = L.map('map', {
-            zoomControl:true, maxZoom:28, minZoom:1
+            zoomControl:true, 
+            maxZoom:28, 
+            minZoom:1
         }).fitBounds([[2.1037736019943134,102.52127453712016],[2.103942975429596,102.52154860320705]]);
         
         var hash = new L.Hash(map);
 
-        // --- DEFINISI BASE LAYERS ---
+        // --- DEFINISI BASE LAYERS (DENGAN FIX ZOOM) ---
+        // Imej satelit Google biasanya ada sehingga zoom 20. 
+        // maxNativeZoom memastikan imej kekal ada (secara digital zoom) walaupun peta di-zoom ke tahap 28.
+        
         var layer_GoogleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
             opacity: 1.0,
-            attribution: '© Google Satellite'
+            attribution: '© Google Satellite',
+            maxNativeZoom: 20,
+            maxZoom: 28
         });
 
         var layer_GoogleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
             opacity: 1.0,
-            attribution: '© Google Hybrid'
+            attribution: '© Google Hybrid',
+            maxNativeZoom: 20,
+            maxZoom: 28
         });
 
         var layer_OSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             opacity: 1.0,
-            attribution: '© OpenStreetMap'
+            attribution: '© OpenStreetMap',
+            maxNativeZoom: 19,
+            maxZoom: 28
         });
 
         // Setel satelit sebagai default
@@ -126,10 +138,10 @@
             return {
                 pane: 'pane_LOTFINAL_0',
                 opacity: 1,
-                color: 'white',
+                color: 'yellow', // Tukar ke kuning supaya lebih nampak atas satelit
                 weight: 2.0, 
                 fill: true,
-                fillOpacity: 0.3,
+                fillOpacity: 0.2,
                 fillColor: 'rgba(133,182,111,1.0)',
                 interactive: true,
             }
@@ -155,7 +167,10 @@
         });
         map.addLayer(layer_LOTFINAL_0);
 
-        // --- KAWALAN LAPISAN (LAYER CONTROL) ---
+        // Tambah Skala Bar (Scale)
+        L.control.scale({position: 'bottomleft'}).addTo(map);
+
+        // --- KAWALAN LAPISAN ---
         var baseMaps = {
             "Satelit (Google)": layer_GoogleSatellite,
             "Hybrid (Google)": layer_GoogleHybrid,
@@ -184,20 +199,22 @@
         function downloadPDF() {
             const element = document.getElementById('map');
             const panel = document.getElementById('ui-panel');
-            panel.style.display = 'none';
+            panel.style.display = 'none'; // Sembunyi panel UI semasa print
+
             const opt = {
-                margin: 0.5,
-                filename: 'Peta_Saujana_Putra.pdf',
+                margin: 0.3,
+                filename: 'Peta_Saujana_Putra_Lot.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
             };
+
             html2pdf().set(opt).from(element).save().then(() => {
-                panel.style.display = 'flex';
+                panel.style.display = 'flex'; // Tunjuk balik panel
             });
         }
 
-        // Street View Context Menu (Klik Kanan)
+        // Klik Kanan untuk Street View
         map.on('contextmenu', function(e) {
             window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${e.latlng.lat},${e.latlng.lng}`, '_blank');
         });
