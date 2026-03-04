@@ -12,6 +12,9 @@
         <link rel="stylesheet" href="css/fontawesome-all.min.css">
         <link rel="stylesheet" href="css/leaflet-search.css">
         <link rel="stylesheet" href="css/leaflet.photon.css">
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
         <style>
         html, body, #map {
             width: 100%;
@@ -19,19 +22,65 @@
             padding: 0;
             margin: 0;
         }
-        /* Style tambahan untuk label koordinat */
-        .coordinates-label {
-            background: rgba(255, 255, 255, 0.7);
-            padding: 2px 5px;
-            border: 1px solid #ccc;
-            font-size: 10px;
+        
+        /* Panel Kawalan Kustom */
+        .custom-panel {
+            position: absolute;
+            top: 10px;
+            right: 50px;
+            z-index: 1000;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 250px;
         }
+
+        .custom-panel h4 { margin: 0 0 5px 0; font-size: 14px; }
+        
+        select, button {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+
+        button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        button:hover { background-color: #27ae60; }
+        
+        /* Sembunyikan elemen semasa print ke PDF */
+        .no-print { display: block; }
         </style>
-        <title>Peta Interaktif - Satelit & Street View</title>
+        <title>Peta Interaktif - Saujana Putra Smart Resident</title>
     </head>
     <body>
-        <div id="map">
+        
+        <div class="custom-panel no-print" id="ui-panel">
+            <h4>Carian & Kemudahan</h4>
+            
+            <label for="lotSelector" style="font-size: 12px;">Pilih Nombor Lot:</label>
+            <select id="lotSelector">
+                <option value="">-- Pilih Lot --</option>
+            </select>
+
+            <hr>
+
+            <button onclick="downloadPDF()">Muat Turun PDF (Peta)</button>
         </div>
+
+        <div id="map"></div>
+
         <script src="js/qgis2web_expressions.js"></script>
         <script src="js/leaflet.js"></script>
         <script src="js/L.Control.Layers.Tree.min.js"></script>
@@ -55,204 +104,91 @@
         }
         
         var map = L.map('map', {
-            zoomControl:false, maxZoom:28, minZoom:1
+            zoomControl:true, maxZoom:28, minZoom:1
         }).fitBounds([[2.1037736019943134,102.52127453712016],[2.103942975429596,102.52154860320705]]);
         
         var hash = new L.Hash(map);
-        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com">Leaflet</a>');
 
-        // --- FITUR TAMBAHAN: BASE LAYERS (SATELIT) ---
+        // --- BASE LAYERS ---
         var layer_GoogleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
             opacity: 1.0,
-            attribution: '© Google Satellite',
-            minZoom: 1,
-            maxZoom: 28
+            attribution: '© Google Satellite'
         });
-
-        var layer_GoogleLabels = L.tileLayer('https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}', {
-            opacity: 1.0,
-            attribution: '© Google Hybrid',
-            minZoom: 1,
-            maxZoom: 28
-        });
-
-        var layer_OSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            opacity: 1.0,
-            attribution: '© OpenStreetMap contributors',
-            minZoom: 1,
-            maxZoom: 28
-        });
-
-        // Masukkan satelit sebagai layer utama saat start
         map.addLayer(layer_GoogleSatellite);
 
-        // --- FITUR TAMBAHAN: STREET VIEW (CONTEXT MENU) ---
-        map.on('contextmenu', function(e) {
-            var lat = e.latlng.lat;
-            var lng = e.latlng.lng;
-            var win = window.open(`https://www.google.com/maps?q=&layer=c&cbll=${lat},${lng}`, '_blank');
-            win.focus();
-        });
-        
-        // Popup untuk memberitahu cara buka Street View
-        L.popup()
-            .setLatLng([2.10385, 102.5214])
-            .setContent("<b>Tips:</b> Klik kanan di mana saja untuk membuka Google Street View.")
-            .openOn(map);
-
-        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
-
-        function removeEmptyRowsFromPopupContent(content, feature) {
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = content;
-            var rows = tempDiv.querySelectorAll('tr');
-            for (var i = 0; i < rows.length; i++) {
-                var td = rows[i].querySelector('td.visible-with-data');
-                var key = td ? td.id : '';
-                if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
-                    rows[i].parentNode.removeChild(rows[i]);
-                }
-            }
-            return tempDiv.innerHTML;
-        }
-
-        function addClassToPopupIfMedia(content, popup) {
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = content;
-            var imgTd = tempDiv.querySelector('td img');
-            if (imgTd) {
-                var src = imgTd.getAttribute('src');
-                if (/\.(jpg|jpeg|png|gif|bmp|webp|avif)$/i.test(src)) {
-                    popup._contentNode.classList.add('media');
-                    setTimeout(function() { popup.update(); }, 10);
-                }
-            }
-        }
-
-        var zoomControl = L.control.zoom({
-            position: 'topleft'
-        }).addTo(map);
-
-        var bounds_group = new L.featureGroup([]);
-
-        function pop_LOTFINAL_0(feature, layer) {
-            layer.on({
-                mouseout: function(e) {
-                    if (typeof layer.closePopup == 'function') { layer.closePopup(); }
-                },
-                mouseover: highlightFeature,
-            });
-            var popupContent = '<table>\
-                    <tr><td colspan="2"><b>FID:</b> ' + (feature.properties['fid'] !== null ? autolinker.link(feature.properties['fid'].toLocaleString()) : '') + '</td></tr>\
-                    <tr><td colspan="2"><b>NO LOT:</b> ' + (feature.properties['NO LOT'] !== null ? autolinker.link(feature.properties['NO LOT'].toLocaleString()) : '') + '</td></tr>\
-                    <tr><td colspan="2"><b>AREA:</b> ' + (feature.properties['AREA'] !== null ? autolinker.link(feature.properties['AREA'].toLocaleString()) : '') + '</td></tr>\
-                </table>';
-            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
-            layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
-            layer.bindPopup(content, { maxHeight: 400 });
-        }
-
+        // --- LAYER LOT ---
         function style_LOTFINAL_0_0() {
             return {
                 pane: 'pane_LOTFINAL_0',
                 opacity: 1,
-                color: 'rgba(255,255,255,1.0)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
+                color: 'white',
                 weight: 2.0, 
                 fill: true,
-                fillOpacity: 0.4,
+                fillOpacity: 0.3,
                 fillColor: 'rgba(133,182,111,1.0)',
                 interactive: true,
             }
         }
-
         map.createPane('pane_LOTFINAL_0');
         map.getPane('pane_LOTFINAL_0').style.zIndex = 400;
 
         var layer_LOTFINAL_0 = new L.geoJson(json_LOTFINAL_0, {
-            attribution: '',
-            interactive: true,
-            dataVar: 'json_LOTFINAL_0',
-            layerName: 'layer_LOTFINAL_0',
             pane: 'pane_LOTFINAL_0',
-            onEachFeature: pop_LOTFINAL_0,
             style: style_LOTFINAL_0_0,
+            onEachFeature: function(feature, layer) {
+                var popupContent = '<b>LOT:</b> ' + feature.properties['NO LOT'] + '<br><b>AREA:</b> ' + feature.properties['AREA'];
+                layer.bindPopup(popupContent);
+                
+                // Isi dropdown secara automatik
+                if (feature.properties['NO LOT']) {
+                    var select = document.getElementById('lotSelector');
+                    var option = document.createElement('option');
+                    option.value = feature.properties['NO LOT'];
+                    option.text = "Lot " + feature.properties['NO LOT'];
+                    select.appendChild(option);
+                }
+            }
         });
-        bounds_group.addLayer(layer_LOTFINAL_0);
         map.addLayer(layer_LOTFINAL_0);
 
-        function pop_TANDASEMPADANCAMPUR_1(feature, layer) {
-            layer.on({
-                mouseout: function(e) { if (typeof layer.closePopup == 'function') { layer.closePopup(); } },
-                mouseover: highlightFeature,
+        // --- FUNGSI PILIH LOT DARI DROPDOWN ---
+        document.getElementById('lotSelector').addEventListener('change', function(e) {
+            var val = e.target.value;
+            if (!val) return;
+
+            layer_LOTFINAL_0.eachLayer(function(layer) {
+                if (layer.feature.properties['NO LOT'] == val) {
+                    map.fitBounds(layer.getBounds());
+                    layer.openPopup();
+                }
             });
-            var popupContent = '<table>\
-                    <tr><td colspan="2"><strong>NO LOT</strong><br />' + (feature.properties['NO LOT'] !== null ? autolinker.link(feature.properties['NO LOT'].toLocaleString()) : '') + '</td></tr>\
-                    <tr><td colspan="2"><strong>ANGLE</strong>: ' + (feature.properties['angle'] !== null ? autolinker.link(feature.properties['angle'].toLocaleString()) : '') + '</td></tr>\
-                </table>';
-            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
-            layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
-            layer.bindPopup(content, { maxHeight: 400 });
-        }
-
-        function style_TANDASEMPADANCAMPUR_1_0() {
-            return {
-                pane: 'pane_TANDASEMPADANCAMPUR_1',
-                radius: 4.0,
-                opacity: 1,
-                color: 'rgba(35,35,35,1.0)',
-                weight: 1,
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(255,0,0,1.0)',
-                interactive: true,
-            }
-        }
-
-        map.createPane('pane_TANDASEMPADANCAMPUR_1');
-        map.getPane('pane_TANDASEMPADANCAMPUR_1').style.zIndex = 401;
-
-        var layer_TANDASEMPADANCAMPUR_1 = new L.geoJson(json_TANDASEMPADANCAMPUR_1, {
-            attribution: '',
-            interactive: true,
-            dataVar: 'json_TANDASEMPADANCAMPUR_1',
-            layerName: 'layer_TANDASEMPADANCAMPUR_1',
-            pane: 'pane_TANDASEMPADANCAMPUR_1',
-            onEachFeature: pop_TANDASEMPADANCAMPUR_1,
-            pointToLayer: function (feature, latlng) {
-                return L.circleMarker(latlng, style_TANDASEMPADANCAMPUR_1_0(feature));
-            },
         });
-        bounds_group.addLayer(layer_TANDASEMPADANCAMPUR_1);
-        map.addLayer(layer_TANDASEMPADANCAMPUR_1);
 
-        // --- LAYER CONTROL (Untuk Switch Peta) ---
-        var baseLayers = {
-            "Google Satellite": layer_GoogleSatellite,
-            "Google Hybrid/Labels": layer_GoogleLabels,
-            "OpenStreetMap": layer_OSM
-        };
+        // --- FUNGSI DOWNLOAD PDF ---
+        function downloadPDF() {
+            const element = document.getElementById('map');
+            const panel = document.getElementById('ui-panel');
+            
+            // Sembunyikan panel kawalan sekejap supaya tidak masuk dalam PDF
+            panel.style.display = 'none';
 
-        var overlays = {
-            "LOT FINAL": layer_LOTFINAL_0,
-            "TANDA SEMPADAN": layer_TANDASEMPADANCAMPUR_1
-        };
+            const opt = {
+                margin: 0.5,
+                filename: 'Peta_Saujana_Putra.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
 
-        L.control.layers(baseLayers, overlays).addTo(map);
-
-        // SEARCH CONTROL
-        map.addControl(new L.Control.Search({
-            layer: layer_LOTFINAL_0,
-            initial: false,
-            hideMarkerOnCollapse: true,
-            propertyName: 'NO LOT'
-        }));
-
-        if (document.getElementsByClassName('search-button')[0]) {
-            document.getElementsByClassName('search-button')[0].className += ' fa fa-binoculars';
+            html2pdf().set(opt).from(element).save().then(() => {
+                panel.style.display = 'flex'; // Tunjukkan balik panel
+            });
         }
+
+        // Street View Context Menu
+        map.on('contextmenu', function(e) {
+            window.open(`http://maps.google.com/maps?q=&layer=c&cbll=${e.latlng.lat},${e.latlng.lng}`, '_blank');
+        });
 
         </script>
     </body>
