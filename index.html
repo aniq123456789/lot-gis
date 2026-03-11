@@ -9,6 +9,7 @@
         <link rel="stylesheet" href="css/leaflet.css">
         <link rel="stylesheet" href="css/fontawesome-all.min.css">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
         
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -18,7 +19,7 @@
             /* --- HEADER VIDEO STYLE --- */
             .header-banner {
                 position: relative;
-                height: 120px;
+                height: 110px;
                 width: 100%;
                 overflow: hidden;
                 display: flex;
@@ -26,63 +27,50 @@
                 justify-content: center;
                 color: white;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-                border-bottom: 4px solid #e74c3c; /* Tukar ke merah ikut logo */
+                border-bottom: 4px solid #e74c3c;
             }
             .header-video {
                 position: absolute;
-                top: 50%;
-                left: 50%;
-                min-width: 100%;
-                min-height: 100%;
-                width: auto;
-                height: auto;
+                top: 50%; left: 50%;
+                min-width: 100%; min-height: 100%;
+                width: auto; height: auto;
                 z-index: -100;
                 transform: translateX(-50%) translateY(-50%);
                 object-fit: cover;
                 filter: brightness(35%);
             }
-            .header-content { display: flex; align-items: center; gap: 25px; z-index: 1; }
-            .header-logo { 
-                width: 120px; 
-                height: auto; 
-                filter: drop-shadow(0px 0px 10px rgba(255,255,255,0.7)); 
-                background: rgba(255,255,255,0.1);
-                padding: 5px;
-                border-radius: 5px;
-            }
-            .header-titles h1 { margin: 0; font-size: 26px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-            .header-titles p { margin: 0; font-size: 14px; opacity: 0.9; font-weight: 300; }
+            .header-content { display: flex; align-items: center; gap: 20px; z-index: 1; }
+            .header-logo { width: 110px; height: auto; filter: drop-shadow(0px 0px 8px white); }
+            .header-titles h1 { margin: 0; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+            .header-titles p { margin: 0; font-size: 13px; opacity: 0.9; }
 
-            /* --- LAYOUT STYLE --- */
-            #wrapper { display: flex; width: 100%; height: calc(100vh - 120px); transition: all 0.3s; }
-            #sidebar { min-width: 350px; max-width: 350px; background: #f8f9fa; transition: all 0.3s; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.1); z-index: 1050; }
-            #sidebar.active { margin-left: -350px; }
-            .content-area { padding: 20px; flex-grow: 1; overflow-y: auto; }
+            /* --- LAYOUT --- */
+            #wrapper { display: flex; width: 100%; height: calc(100vh - 110px); }
+            #sidebar { min-width: 340px; max-width: 340px; background: #fdfdfd; transition: 0.3s; display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.1); z-index: 1050; }
+            #sidebar.active { margin-left: -340px; }
+            .content-area { padding: 15px; flex-grow: 1; overflow-y: auto; }
             #map-container { flex-grow: 1; position: relative; }
-            #map { width: 100%; height: 100%; }
-            #sidebarCollapse { position: absolute; top: 20px; left: 20px; z-index: 1000; background: #1a252f; color: white; border: none; border-radius: 5px; padding: 10px 15px; cursor: pointer; }
+            #map { width: 100%; height: 100%; background: #ececec; }
             
-            /* --- CARD MENU & INFO PANEL --- */
-            .card-menu { background: #fff; border-radius: 10px; padding: 15px; margin-bottom: 15px; border: 1px solid #eef0f2; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-            .card-menu h6 { font-weight: 700; color: #1a252f; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #e74c3c; padding-bottom: 8px; }
-            
-            .info-item { margin-bottom: 12px; padding: 8px; background: #fcfcfc; border-radius: 5px; border-left: 3px solid #e74c3c; }
-            .info-label { font-weight: bold; color: #7f8c8d; display: block; font-size: 11px; text-transform: uppercase; }
-            .info-value { color: #2c3e50; font-weight: 600; font-size: 15px; }
+            #sidebarCollapse { position: absolute; top: 15px; left: 15px; z-index: 1000; background: #1a252f; color: white; border: none; border-radius: 5px; padding: 10px 15px; }
 
-            .btn-pdf { background: #e74c3c; color: white; width: 100%; border: none; margin-top: 10px; font-weight: 600; padding: 12px; border-radius: 8px; transition: 0.3s; }
+            /* --- CARDS & INFO --- */
+            .card-menu { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+            .card-menu h6 { font-weight: 700; color: #1a252f; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #e74c3c; padding-bottom: 8px; }
+            
+            .info-box { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #e74c3c; margin-bottom: 10px; }
+            .info-label { font-size: 10px; text-transform: uppercase; color: #95a5a6; font-weight: bold; display: block; }
+            .info-value { font-size: 15px; color: #2c3e50; font-weight: 600; }
+
+            .btn-pdf { background: #e74c3c; color: white; width: 100%; border: none; padding: 10px; border-radius: 8px; font-weight: 600; transition: 0.3s; margin-top: 5px; }
             .btn-pdf:hover { background: #c0392b; transform: translateY(-2px); color: white; }
-            
-            .basemap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-            .basemap-item { cursor: pointer; border: 2px solid #f0f0f0; border-radius: 8px; padding: 10px; text-align: center; font-size: 12px; transition: 0.3s; }
-            .basemap-item.active { border-color: #e74c3c; background: #fdf2f2; font-weight: bold; }
 
-            /* --- PDF TEMPLATE (HIDDEN) --- */
-            #pdf-report-template { display: none; background: white; padding: 50px; width: 800px; }
-            .pdf-header { text-align: center; border-bottom: 4px solid #e74c3c; padding-bottom: 20px; margin-bottom: 30px; }
-            .pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            .pdf-table td { padding: 12px; border: 1px solid #dee2e6; }
-            .pdf-table td.label { background: #f8f9fa; font-weight: bold; width: 30%; }
+            .basemap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .basemap-item { cursor: pointer; border: 2px solid #f1f1f1; border-radius: 8px; padding: 8px; text-align: center; font-size: 12px; }
+            .basemap-item.active { border-color: #e74c3c; background: #fef2f2; font-weight: bold; }
+
+            /* --- PDF HIDDEN TEMPLATE --- */
+            #pdf-template { display: none; background: white; padding: 40px; width: 800px; }
         </style>
     </head>
     <body>
@@ -104,84 +92,71 @@
             <nav id="sidebar">
                 <div class="content-area">
                     
-                    <div class="card-menu" id="infoPanel">
-                        <h6><i class="fas fa-file-alt text-danger"></i> Maklumat Lot Terpilih</h6>
-                        <div id="detailsPlaceholder" class="text-muted small text-center py-4">
-                            <i class="fas fa-mouse-pointer mb-2" style="font-size: 20px;"></i><br>
-                            Sila klik pada lot di peta untuk melihat butiran kawasan.
+                    <div class="card-menu">
+                        <h6><i class="fas fa-info-circle text-danger"></i> Butiran Lot</h6>
+                        <div id="placeholderText" class="text-center py-3 text-muted small">
+                            <i class="fas fa-hand-pointer mb-2" style="font-size: 20px;"></i><br>
+                            Klik mana-mana lot pada peta untuk melihat maklumat.
                         </div>
-                        <div id="lotDetails" style="display: none;">
-                            <div class="info-item">
+                        <div id="lotDataDisplay" style="display: none;">
+                            <div class="info-box">
                                 <span class="info-label">Nombor Lot</span>
-                                <span class="info-value" id="disp-no-lot">-</span>
+                                <span class="info-value" id="res-no-lot">-</span>
                             </div>
-                            <div class="info-item">
+                            <div class="info-box">
+                                <span class="info-label">Keluasan Kawasan</span>
+                                <span class="info-value" id="res-luas">-</span>
+                            </div>
+                            <div class="info-box">
                                 <span class="info-label">Nama Pemilik</span>
-                                <span class="info-value" id="disp-pemilik">Hamba Allah</span>
+                                <span class="info-value">Hamba Allah</span>
                             </div>
-                            <div class="info-item">
-                                <span class="info-label">Luas Kawasan</span>
-                                <span class="info-value" id="disp-luas">-</span>
-                            </div>
-                            <button class="btn btn-pdf" id="generateLotPDF">
+                            <button class="btn btn-pdf" id="btnDownloadPDF">
                                 <i class="fas fa-file-pdf me-2"></i> Jana Laporan PDF
                             </button>
                         </div>
                     </div>
 
                     <div class="card-menu">
-                        <h6><i class="fas fa-search text-primary"></i> Carian Pantas</h6>
-                        <select id="lotSelector" class="form-select">
-                            <option value="">-- Cari No Lot --</option>
+                        <h6><i class="fas fa-search text-primary"></i> Cari Lot</h6>
+                        <select id="lotSearch" class="form-select">
+                            <option value="">-- Pilih Nombor Lot --</option>
                         </select>
                     </div>
 
                     <div class="card-menu">
-                        <h6><i class="fas fa-map text-success"></i> Jenis Peta</h6>
+                        <h6><i class="fas fa-layer-group text-success"></i> Basemap</h6>
                         <div class="basemap-grid">
-                            <div id="btn-sat" class="basemap-item active" onclick="changeBasemap('sat')">
-                                <i class="fas fa-satellite fa-lg mb-1"></i><br>Satelit
-                            </div>
-                            <div id="btn-street" class="basemap-item" onclick="changeBasemap('street')">
-                                <i class="fas fa-road fa-lg mb-1"></i><br>Jalan
-                            </div>
+                            <div id="b-sat" class="basemap-item active" onclick="setBasemap('sat')">Satelit</div>
+                            <div id="b-str" class="basemap-item" onclick="setBasemap('str')">Jalan</div>
                         </div>
                     </div>
 
                     <div class="card-menu">
-                        <h6><i class="fas fa-adjust text-warning"></i> Kelegapan Lot</h6>
-                        <input type="range" class="form-range" id="opacitySlider" min="0" max="1" step="0.1" value="0.3">
+                        <h6><i class="fas fa-sliders-h text-warning"></i> Kelegapan Lot</h6>
+                        <input type="range" class="form-range" id="opSlider" min="0" max="1" step="0.1" value="0.3">
                     </div>
-
                 </div>
             </nav>
 
             <div id="map-container">
-                <button type="button" id="sidebarCollapse" class="btn"><i class="fas fa-bars"></i></button>
+                <button id="sidebarCollapse"><i class="fas fa-bars"></i></button>
                 <div id="map"></div>
             </div>
         </div>
 
-        <div id="pdf-report-template">
-            <div class="pdf-header">
-                <img src="image_247e7c.png" style="width:150px;">
-                <h2 style="margin-top:15px;">LAPORAN MAKLUMAT LOT TANAH</h2>
-                <p>Jabatan Geomatik, Politeknik Ungku Omar</p>
+        <div id="pdf-template">
+            <div style="text-align: center; border-bottom: 3px solid #e74c3c; padding-bottom: 15px; margin-bottom: 20px;">
+                <img src="image_247e7c.png" style="width: 140px;">
+                <h2 style="margin: 10px 0 0 0; text-transform: uppercase;">Laporan Maklumat Lot</h2>
+                <p style="margin: 0; color: #666;">Politeknik Ungku Omar - Jabatan Geomatik</p>
             </div>
-            
-            <table class="pdf-table">
-                <tr><td class="label">Nombor Lot</td><td id="pdf-no-lot"></td></tr>
-                <tr><td class="label">Nama Pemilik</td><td id="pdf-nama-pemilik"></td></tr>
-                <tr><td class="label">Luas Kawasan</td><td id="pdf-luas-lot"></td></tr>
-                <tr><td class="label">Tarikh Laporan</td><td id="pdf-date"></td></tr>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr><td style="padding: 12px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold; width: 30%;">Nombor Lot</td><td style="padding: 12px; border: 1px solid #ddd;" id="pdf-lot"></td></tr>
+                <tr><td style="padding: 12px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold;">Keluasan</td><td style="padding: 12px; border: 1px solid #ddd;" id="pdf-area"></td></tr>
+                <tr><td style="padding: 12px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold;">Tarikh Cetakan</td><td style="padding: 12px; border: 1px solid #ddd;" id="pdf-time"></td></tr>
             </table>
-
-            <h4 style="border-left: 5px solid #e74c3c; padding-left: 10px;">Visual Lokasi Peta</h4>
-            <div id="pdf-map-output" style="margin-top: 10px; text-align: center;"></div>
-            
-            <div style="margin-top: 40px; font-size: 10px; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 10px;">
-                Dokumen ini dijana secara digital melalui Sistem Cempaka Digital Resident (PUO).
-            </div>
+            <div id="pdf-map-capture" style="margin-top: 25px; text-align: center;"></div>
         </div>
 
         <script src="js/leaflet.js"></script>
@@ -191,112 +166,79 @@
 
         <script>
             // Sidebar Toggle
-            $(document).ready(function () {
-                $('#sidebarCollapse').on('click', function () { $('#sidebar').toggleClass('active'); });
-            });
+            $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
 
             // Initialize Map
-            var map = L.map('map', { zoomControl: false, maxZoom: 28 }).fitBounds([[2.1037736019943134,102.52127453712016],[2.103942975429596,102.52154860320705]]);
+            var map = L.map('map', { zoomControl: false }).setView([2.10385, 102.5214], 19);
             L.control.zoom({ position: 'topright' }).addTo(map);
 
-            // Basemaps
-            var layer_GoogleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 28 }).addTo(map);
-            var layer_GoogleStreet = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 28 });
+            var satLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}').addTo(map);
+            var strLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}');
 
-            function changeBasemap(type) {
+            function setBasemap(type) {
                 $('.basemap-item').removeClass('active');
-                if(type === 'sat') { 
-                    map.addLayer(layer_GoogleSatellite); 
-                    map.removeLayer(layer_GoogleStreet); 
-                    $('#btn-sat').addClass('active'); 
-                } else { 
-                    map.addLayer(layer_GoogleStreet); 
-                    map.removeLayer(layer_GoogleSatellite); 
-                    $('#btn-street').addClass('active'); 
-                }
+                if(type === 'sat') { map.addLayer(satLayer); map.removeLayer(strLayer); $('#b-sat').addClass('active'); }
+                else { map.addLayer(strLayer); map.removeLayer(satLayer); $('#b-str').addClass('active'); }
             }
 
-            // Fungsi Update Panel Maklumat
-            function updateInfoPanel(props) {
-                $('#detailsPlaceholder').hide();
-                $('#lotDetails').fadeIn();
-                
-                $('#disp-no-lot').text(props['NO LOT'] || 'N/A');
-                $('#disp-luas').text((props['AREA'] || '0') + ' m²');
-                $('#disp-pemilik').text(props['OWNER'] || 'Hamba Allah'); 
-
-                // Selaraskan Dropdown
-                $('#lotSelector').val(props['NO LOT']);
+            // Function update UI
+            function showLotDetails(properties) {
+                $('#placeholderText').hide();
+                $('#lotDataDisplay').fadeIn();
+                $('#res-no-lot').text(properties['NO LOT'] || 'Tiada Data');
+                $('#res-luas').text((properties['AREA'] || '0') + ' m²');
+                $('#lotSearch').val(properties['NO LOT']);
             }
 
-            // GeoJSON Layer
-            var layer_LOTFINAL_0 = L.geoJson(json_LOTFINAL_0, {
-                style: { color: '#f1c40f', weight: 2, fillColor: '#e74c3c', fillOpacity: 0.3 },
+            // Lot Layer
+            var geoLayer = L.geoJson(json_LOTFINAL_0, {
+                style: { color: 'yellow', weight: 2, fillColor: '#e74c3c', fillOpacity: 0.3 },
                 onEachFeature: function(feature, layer) {
-                    // Isi Dropdown
                     if (feature.properties['NO LOT']) {
-                        $('#lotSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
+                        $('#lotSearch').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
                     }
-
-                    // Event Klik pada Lot
                     layer.on('click', function(e) {
                         L.DomEvent.stopPropagation(e);
-                        updateInfoPanel(feature.properties);
-                        map.fitBounds(layer.getBounds(), { padding: [30, 30] });
+                        showLotDetails(feature.properties);
+                        map.fitBounds(layer.getBounds());
                         
-                        // Highlight lot terpilih (optional)
-                        layer_LOTFINAL_0.setStyle({ color: '#f1c40f', weight: 2 });
-                        layer.setStyle({ color: '#ffffff', weight: 4 });
+                        // Style Highlight
+                        geoLayer.setStyle({ color: 'yellow', weight: 2 });
+                        layer.setStyle({ color: 'white', weight: 4 });
                     });
                 }
             }).addTo(map);
 
-            // Opacity Control
-            $('#opacitySlider').on('input', function() { 
-                layer_LOTFINAL_0.setStyle({ fillOpacity: $(this).val() }); 
-            });
+            // Opacity Slider
+            $('#opSlider').on('input', function() { geoLayer.setStyle({ fillOpacity: $(this).val() }); });
 
-            // Dropdown Selector Change
-            $('#lotSelector').on('change', function() {
+            // Dropdown Search
+            $('#lotSearch').change(function() {
                 var val = $(this).val();
-                if(!val) return;
-                layer_LOTFINAL_0.eachLayer(function(layer) {
+                geoLayer.eachLayer(function(layer) {
                     if (layer.feature.properties['NO LOT'] == val) {
-                        updateInfoPanel(layer.feature.properties);
-                        map.fitBounds(layer.getBounds(), {padding: [50, 50]});
+                        showLotDetails(layer.feature.properties);
+                        map.fitBounds(layer.getBounds());
                     }
                 });
             });
 
-            // Penjanaan PDF
-            $('#generateLotPDF').on('click', function() {
-                const lotNo = $('#disp-no-lot').text();
-                const lotArea = $('#disp-luas').text();
-                const lotOwner = $('#disp-pemilik').text();
+            // PDF Generator
+            $('#btnDownloadPDF').click(function() {
+                const lot = $('#res-no-lot').text();
+                $('#pdf-lot').text(lot);
+                $('#pdf-area').text($('#res-luas').text());
+                $('#pdf-time').text(new Date().toLocaleString());
 
-                // Set data ke template PDF
-                document.getElementById('pdf-no-lot').innerText = lotNo;
-                document.getElementById('pdf-luas-lot').innerText = lotArea;
-                document.getElementById('pdf-nama-pemilik').innerText = lotOwner;
-                document.getElementById('pdf-date').innerText = new Date().toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
-
-                // Ambil screenshot peta
                 html2canvas(document.getElementById('map'), { useCORS: true }).then(canvas => {
-                    var imgData = canvas.toDataURL('image/png');
-                    document.getElementById('pdf-map-output').innerHTML = `<img src="${imgData}" style="width:100%; border:2px solid #eee; border-radius:10px;">`;
-                    
-                    var element = document.getElementById('pdf-report-template');
+                    $('#pdf-map-capture').html(`<img src="${canvas.toDataURL('image/png')}" style="width:100%; border:1px solid #ccc;">`);
+                    const element = document.getElementById('pdf-template');
                     element.style.display = 'block';
-                    
                     html2pdf().set({
-                        margin: 0.3,
-                        filename: 'Laporan_Lot_' + lotNo + '.pdf',
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2 },
+                        margin: 0.5,
+                        filename: 'Laporan_Lot_' + lot + '.pdf',
                         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-                    }).from(element).save().then(() => { 
-                        element.style.display = 'none'; 
-                    });
+                    }).from(element).save().then(() => { element.style.display = 'none'; });
                 });
             });
 
