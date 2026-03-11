@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-        <title>Cempaka Digital Resident - PUO</title>
+        <title>Cempaka Digital Resident - Pelan Rasmi</title>
         
         <link rel="stylesheet" href="css/leaflet.css">
         <link rel="stylesheet" href="css/fontawesome-all.min.css">
@@ -17,48 +17,49 @@
         <style>
             body, html { height: 100%; margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
             header {
-                position: relative; height: 130px; width: 100%; overflow: hidden;
+                position: relative; height: 110px; width: 100%; overflow: hidden;
                 display: flex; align-items: center; justify-content: center; color: white;
                 border-bottom: 5px solid #e74c3c; z-index: 1000;
             }
             #header-video {
                 position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%;
                 width: auto; height: auto; transform: translate(-50%, -50%);
-                z-index: -1; filter: brightness(25%); object-fit: cover;
+                z-index: -1; filter: brightness(20%); object-fit: cover;
             }
-            .header-content { display: flex; align-items: center; width: 96%; justify-content: space-between; z-index: 1; }
-            .logo-poli { height: 80px; }
-            .logo-puo { height: 85px; }
+            .header-content { display: flex; align-items: center; width: 95%; justify-content: space-between; z-index: 1; }
+            .logo-poli, .logo-puo { height: 70px; }
 
-            #wrapper { display: flex; width: 100%; height: calc(100vh - 130px); }
-            #sidebar { min-width: 340px; background: #ffffff; display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.1); z-index: 1050; transition: 0.3s; }
-            #sidebar.active { margin-left: -340px; }
-            #map-container { flex-grow: 1; position: relative; }
-            #map { width: 100%; height: 100%; background: #222; }
+            #wrapper { display: flex; width: 100%; height: calc(100vh - 110px); }
+            #sidebar { min-width: 350px; background: #ffffff; display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.1); z-index: 1050; transition: 0.3s; }
+            #sidebar.active { margin-left: -350px; }
+            #map-container { flex-grow: 1; position: relative; background: #111; }
+            #map { width: 100%; height: 100%; }
             
-            #sidebarCollapse { position: absolute; top: 15px; left: 15px; z-index: 1000; background: #1a252f; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; }
+            #sidebarCollapse { position: absolute; top: 15px; left: 15px; z-index: 1000; background: #1a252f; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 8px; }
 
-            .card-menu { background: #fff; border-radius: 12px; padding: 15px; margin: 15px; border: 1px solid #eee; }
-            .card-menu h6 { font-weight: 700; color: #1a252f; margin-bottom: 12px; border-bottom: 2px solid #e74c3c; padding-bottom: 8px; }
+            .card-menu { background: #fff; border-radius: 12px; padding: 15px; margin: 12px; border: 1px solid #eee; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+            .card-menu h6 { font-weight: 800; color: #1a252f; margin-bottom: 15px; border-bottom: 3px solid #e74c3c; padding-bottom: 8px; display: inline-block; }
             
-            .info-box { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 5px solid #e74c3c; margin-bottom: 12px; }
-            .info-label { font-size: 11px; text-transform: uppercase; color: #95a5a6; font-weight: 800; display: block; }
-            .info-value { font-size: 17px; color: #2c3e50; font-weight: 700; display: block; margin-top: 2px; }
+            .info-box { background: #fdfdfd; padding: 10px; border-radius: 6px; border-left: 5px solid #e74c3c; margin-bottom: 10px; box-shadow: inset 0 0 5px rgba(0,0,0,0.02); }
+            .info-label { font-size: 10px; text-transform: uppercase; color: #7f8c8d; font-weight: 800; display: block; }
+            .info-value { font-size: 16px; color: #2c3e50; font-weight: 700; display: block; }
 
-            .btn-pdf { background: #d9534f; color: white; width: 100%; border: none; padding: 14px; border-radius: 10px; font-weight: 700; text-transform: uppercase; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
-            .btn-pdf:hover { background: #c9302c; }
+            .btn-pdf { background: #27ae60; color: white; width: 100%; border: none; padding: 15px; border-radius: 10px; font-weight: 800; letter-spacing: 1px; transition: 0.3s; margin-top: 10px; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3); }
+            .btn-pdf:hover { background: #219150; transform: translateY(-2px); }
 
             #loading-overlay {
-                display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); 
-                z-index: 9999; color:white; text-align:center; padding-top:20%; font-size: 20px;
+                display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); 
+                z-index: 9999; color:white; text-align:center; padding-top:15%;
             }
+            .spinner-custom { width: 3rem; height: 3rem; color: #e74c3c; }
         </style>
     </head>
     <body>
 
         <div id="loading-overlay">
-            <div class="spinner-border text-danger mb-3" role="status"></div>
-            <br>Menyelaraskan Kedudukan Lot & Menjana Laporan...
+            <div class="spinner-border spinner-custom mb-3" role="status"></div>
+            <h2 class="fw-bold">MENJANA LAPORAN HD</h2>
+            <p>Peta sedang memfokuskan lot dan memuat turun imej satelit...<br>Sila jangan tutup pelayar anda.</p>
         </div>
 
         <img id="logoPuo" src="image_247e7c.png" style="display:none;">
@@ -70,8 +71,8 @@
             <div class="header-content">
                 <img src="Poli_Logo.png" class="logo-poli">
                 <div class="text-center">
-                    <h1 class="m-0 fw-bold">Cempaka Digital Resident</h1>
-                    <p class="m-0 text-warning">Sistem Maklumat Lot Tanah Terdigital</p>
+                    <h2 class="m-0 fw-bold">CEMPAKA DIGITAL RESIDENT</h2>
+                    <p class="m-0 text-warning fw-bold"><i class="fas fa-map-marker-alt"></i> UNIT GEOMATIK - POLITEKNIK UNGKU OMAR</p>
                 </div>
                 <img src="image_247e7c.png" class="logo-puo">
             </div>
@@ -80,14 +81,14 @@
         <div id="wrapper">
             <nav id="sidebar">
                 <div class="card-menu">
-                    <h6>Butiran Lot Terpilih</h6>
+                    <h6><i class="fas fa-info-circle"></i> BUTIRAN LOT</h6>
                     <div id="lotDataDisplay">
                         <div class="info-box">
                             <span class="info-label">Nombor Lot</span>
                             <span class="info-value" id="res-no-lot">-</span>
                         </div>
                         <div class="info-box">
-                            <span class="info-label">Keluasan (Area)</span>
+                            <span class="info-label">Keluasan</span>
                             <span class="info-value" id="res-luas">-</span>
                         </div>
                         <div class="info-box">
@@ -95,13 +96,13 @@
                             <span class="info-value" id="res-owner">-</span>
                         </div>
                         <button class="btn btn-pdf" onclick="generateFinalPDF()">
-                            <i class="fas fa-print"></i> CETAK LAPORAN RASMI
+                            <i class="fas fa-file-download"></i> JANA PELAN AKUI (PDF)
                         </button>
                     </div>
                 </div>
                 <div class="card-menu">
-                    <h6>Cari No Lot</h6>
-                    <select id="lotSearchSelector" class="form-select">
+                    <h6><i class="fas fa-search"></i> CARIAN</h6>
+                    <select id="lotSearchSelector" class="form-select border-danger">
                         <option value="">-- Pilih Nombor Lot --</option>
                     </select>
                 </div>
@@ -119,25 +120,33 @@
 
         <script>
             var highlightLayer;
-            window.selectedLotData = { lot: "-", owner: "-", area: "-" };
+            window.selectedLotData = { lot: "-", owner: "-", area: "-", layer: null };
 
-            var map = L.map('map', { zoomControl: false, attributionControl: false }).setView([2.10385, 102.5214], 19);
+            // Inisialisasi Peta
+            var map = L.map('map', { 
+                zoomControl: false, 
+                attributionControl: false,
+                maxZoom: 22
+            }).setView([2.10385, 102.5214], 19);
             
+            // Satelit Layer
             var satelliteLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { 
                 maxZoom: 22, 
                 crossOrigin: 'anonymous' 
             }).addTo(map);
 
-            var defaultStyle = { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 };
+            var defaultStyle = { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.2 };
 
             function highlightFeature(layer) {
                 lotLayer.eachLayer(l => lotLayer.resetStyle(l));
                 highlightLayer = layer;
+                
+                // Style semasa di web
                 highlightLayer.setStyle({ 
                     weight: 4, 
                     color: '#ffff00', 
                     fillColor: '#e74c3c', 
-                    fillOpacity: 0.4 
+                    fillOpacity: 0.5 
                 });
                 
                 var props = highlightLayer.feature.properties;
@@ -148,7 +157,8 @@
                 window.selectedLotData = {
                     lot: props['NO LOT'] || "-",
                     owner: props['tsp — pe'] || props['Pemilik'] || "Jabatan Geomatik (PUO)",
-                    area: (props['AREA'] ? parseFloat(props['AREA']).toFixed(3) + " m²" : "-")
+                    area: (props['AREA'] ? parseFloat(props['AREA']).toFixed(3) + " m²" : "-"),
+                    layer: layer
                 };
             }
 
@@ -161,7 +171,7 @@
                     layer.on({
                         click: function(e) {
                             highlightFeature(e.target);
-                            map.flyToBounds(e.target.getBounds(), { padding: [80, 80] });
+                            map.flyToBounds(e.target.getBounds(), { padding: [50, 50] });
                         }
                     });
                 }
@@ -172,112 +182,123 @@
                 lotLayer.eachLayer(layer => {
                     if (layer.feature.properties['NO LOT'] == val) {
                         highlightFeature(layer);
-                        map.flyToBounds(layer.getBounds(), { padding: [80, 80] });
+                        map.flyToBounds(layer.getBounds(), { padding: [50, 50] });
                     }
                 });
             });
 
             $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
 
-            // --- FUNGSI JANA PDF (TITIK FOKUS TENGAH & JELAS) ---
+            // --- FUNGSI JANA PDF (TITIK FOKUS TENGAH & SANGAT JELAS) ---
             async function generateFinalPDF() {
                 if(window.selectedLotData.lot === "-") {
                     alert("Sila pilih lot pada peta terlebih dahulu.");
                     return;
                 }
 
-                document.getElementById('loading-overlay').style.display = "block";
+                const overlay = document.getElementById('loading-overlay');
+                overlay.style.display = "block";
 
-                // 1. TEKNIK FOKUS: Cari pusat lot dan paksa peta ke tengah tepat
-                if(highlightLayer) {
-                    // Sembunyikan sidebar & butang bar untuk capture yang bersih
-                    document.getElementById('sidebarCollapse').style.display = 'none';
-                    
-                    // Gunakan fitBounds dengan padding 0 untuk memastikan ia betul-betul di tengah frame
-                    map.fitBounds(highlightLayer.getBounds(), { padding: [150, 150], animate: false });
-                    
-                    // Tambah Label Lot yang sangat jelas di tengah lot
-                    var center = highlightLayer.getBounds().getCenter();
-                    var tempMarker = L.marker(center, {
-                        icon: L.divIcon({
-                            className: 'pdf-label',
-                            html: `<div style="background:yellow; color:black; padding:5px 10px; border:2px solid black; font-weight:bold; border-radius:5px; white-space:nowrap;">LOT ${window.selectedLotData.lot}</div>`,
-                            iconSize: [100, 40]
-                        })
-                    }).addTo(map);
-                }
-
-                // Tunggu sebentar untuk rendering tiles satelit yang tajam
-                await new Promise(r => setTimeout(r, 1200));
-
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('l', 'mm', 'a3'); 
+                // 1. PROSES FOKUS EKSTRIM
+                const targetLayer = window.selectedLotData.layer;
                 
-                // Ambil skrin dengan skala tinggi (3) untuk kejelasan maksimum
-                const canvas = await html2canvas(document.getElementById('map'), { 
-                    useCORS: true, 
-                    scale: 3,
-                    logging: false
+                // Sembunyikan UI yang mengganggu
+                document.getElementById('sidebarCollapse').style.display = 'none';
+                
+                // Zum sangat rapat (Level 21) dan letak lot di tengah-tengah
+                map.setView(targetLayer.getBounds().getCenter(), 21, { animate: false });
+                
+                // Modifikasi style lot khusus untuk PDF (Border kuning tebal)
+                targetLayer.setStyle({
+                    weight: 10,
+                    color: '#ffff00',
+                    fillOpacity: 0.3
                 });
-                const imgData = canvas.toDataURL('image/png');
 
-                // Lukis Frame Laporan
-                doc.setDrawColor(44, 62, 80);
-                doc.setLineWidth(1.5); doc.rect(10, 10, 400, 277); // Outer
-                doc.setLineWidth(0.5); doc.rect(12, 12, 396, 273); // Inner
-                doc.line(95, 10, 95, 287); // Divider sidebar
+                // Tambah Label Gergasi di peta untuk PDF
+                var pdfMarker = L.marker(targetLayer.getBounds().getCenter(), {
+                    icon: L.divIcon({
+                        className: 'custom-pdf-label',
+                        html: `<div style="background:rgba(255,255,0,0.9); color:black; padding:8px 15px; border:4px solid #000; font-size:24px; font-weight:900; border-radius:10px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); white-space:nowrap;">LOT ${window.selectedLotData.lot}</div>`,
+                        iconSize: [150, 50],
+                        iconAnchor: [75, 25]
+                    })
+                }).addTo(map);
 
-                // Header Sidebar
+                // Tunggu 2 saat untuk tiles Google Satelit berkualiti HD keluar
+                await new Promise(r => setTimeout(r, 2000));
+
                 try {
-                    const logo = document.getElementById("logoPuo");
-                    doc.addImage(logo, 'PNG', 35, 20, 25, 30);
-                } catch(e){}
-
-                doc.setFont("times", "bold"); doc.setFontSize(16);
-                doc.text("POLITEKNIK UNGKU OMAR", 47.5, 60, {align: "center"});
-                doc.setDrawColor(231, 76, 60); doc.setLineWidth(1); doc.line(20, 65, 85, 65);
-
-                doc.setFontSize(11); doc.setFont("times", "normal"); doc.setTextColor(100);
-                doc.text("JABATAN KEJURUTERAAN AWAM", 47.5, 72, {align: "center"});
-                doc.setFont("times", "bold"); doc.setTextColor(231, 76, 60);
-                doc.text("UNIT GEOMATIK", 47.5, 78, {align: "center"});
-
-                // Seksyen Data (Susunan Teratur)
-                let yPos = 105;
-                const dataFields = [
-                    { label: "NOMBOR LOT", value: window.selectedLotData.lot },
-                    { label: "PEMILIK BERDAFTAR", value: window.selectedLotData.owner },
-                    { label: "KELUASAN TANAH", value: window.selectedLotData.area },
-                    { label: "TARIKH SISTEM", value: new Date().toLocaleDateString('ms-MY', {day:'2-digit', month:'long', year:'numeric'}) }
-                ];
-
-                dataFields.forEach(item => {
-                    doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(150);
-                    doc.text(item.label, 18, yPos);
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('l', 'mm', 'a3'); 
                     
-                    doc.setFillColor(248, 249, 250); doc.rect(18, yPos + 2, 70, 14, 'F');
-                    doc.setDrawColor(200); doc.rect(18, yPos + 2, 70, 14, 'S');
+                    // Ambil skrin dengan kualiti Ultra HD (scale 4)
+                    const canvas = await html2canvas(document.getElementById('map'), { 
+                        useCORS: true, 
+                        scale: 4, 
+                        logging: false
+                    });
+                    
+                    const imgData = canvas.toDataURL('image/png');
 
-                    doc.setFont("times", "bold"); doc.setFontSize(12); doc.setTextColor(0);
-                    let textLines = doc.splitTextToSize(item.value.toUpperCase(), 65);
-                    doc.text(textLines, 22, yPos + 10);
-                    yPos += 28;
-                });
+                    // --- REKA BENTUK PDF ---
+                    // Bingkai Rasmi
+                    doc.setDrawColor(0); doc.setLineWidth(2); doc.rect(5, 5, 410, 287);
+                    doc.setLineWidth(0.5); doc.rect(7, 7, 406, 283);
+                    doc.line(100, 5, 100, 292); // Line Sidebar
 
-                // Memasukkan Gambar Peta yang telah difokus ke tengah
-                // x=97, y=14, lebar=308, tinggi=269 (Memenuhi ruang kanan A3)
-                doc.addImage(imgData, 'PNG', 97, 14, 308, 269, undefined, 'FAST');
+                    // Header Logo
+                    const puoLogo = document.getElementById("logoPuo");
+                    doc.addImage(puoLogo, 'PNG', 38, 15, 25, 30);
 
-                // Footer
-                doc.setFontSize(9); doc.setFont("helvetica", "italic"); doc.setTextColor(180);
-                doc.text("Sistem Maklumat Digital Resident (PUO) © 2026", 47.5, 275, {align: "center"});
+                    doc.setFont("times", "bold"); doc.setFontSize(18);
+                    doc.text("POLITEKNIK UNGKU OMAR", 52.5, 55, {align: "center"});
+                    
+                    doc.setDrawColor(231, 76, 60); doc.setLineWidth(1.5); doc.line(20, 60, 85, 60);
 
-                // Simpan & Reset Semula UI
-                doc.save(`PELAN_LOT_${window.selectedLotData.lot}_PUO.pdf`);
-                
-                map.removeLayer(tempMarker); // Buang label kuning sementara
-                document.getElementById('sidebarCollapse').style.display = 'block';
-                document.getElementById('loading-overlay').style.display = "none";
+                    doc.setFontSize(11); doc.setFont("times", "normal"); doc.setTextColor(80);
+                    doc.text("JABATAN KEJURUTERAAN AWAM", 52.5, 68, {align: "center"});
+                    doc.text("PELAN MAKLUMAT DIGITAL", 52.5, 74, {align: "center"});
+
+                    // Informasi Lot
+                    let startY = 100;
+                    const info = [
+                        { k: "NOMBOR LOT", v: window.selectedLotData.lot },
+                        { k: "NAMA PEMILIK", v: window.selectedLotData.owner },
+                        { k: "KELUASAN TANAH", v: window.selectedLotData.area },
+                        { k: "TARIKH CETAK", v: new Date().toLocaleDateString('ms-MY') }
+                    ];
+
+                    info.forEach(item => {
+                        doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(150);
+                        doc.text(item.k, 20, startY);
+                        
+                        doc.setFillColor(245, 245, 245); doc.rect(20, startY + 2, 70, 15, 'F');
+                        doc.setDrawColor(200); doc.rect(20, startY + 2, 70, 15, 'S');
+
+                        doc.setFont("times", "bold"); doc.setFontSize(13); doc.setTextColor(0);
+                        let wrap = doc.splitTextToSize(item.v.toUpperCase(), 65);
+                        doc.text(wrap, 24, startY + 11);
+                        startY += 30;
+                    });
+
+                    // MASUKKAN PETA (Lot sudah di tengah & Dizum rapat)
+                    // x=102, y=9, lebar=303, tinggi=279
+                    doc.addImage(imgData, 'PNG', 102, 9, 303, 279, undefined, 'FAST');
+
+                    // Simpan PDF
+                    doc.save(`Laporan_Tanah_Lot_${window.selectedLotData.lot}.pdf`);
+
+                } catch (err) {
+                    console.error(err);
+                    alert("Ralat menjana PDF. Sila cuba lagi.");
+                } finally {
+                    // Reset peta ke asal
+                    map.removeLayer(pdfMarker);
+                    targetLayer.setStyle({ weight: 4, color: '#ffff00', fillOpacity: 0.5 });
+                    document.getElementById('sidebarCollapse').style.display = 'block';
+                    overlay.style.display = "none";
+                }
             }
         </script>
     </body>
