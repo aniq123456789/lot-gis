@@ -39,36 +39,30 @@
                 z-index: -100;
                 transform: translateX(-50%) translateY(-50%);
                 object-fit: cover;
-                filter: brightness(50%);
+                filter: brightness(40%);
             }
-            .header-content {
-                display: flex;
-                align-items: center;
-                gap: 20px;
-                z-index: 1;
-            }
-            .header-logo {
-                width: 70px;
-                height: auto;
-                filter: drop-shadow(0px 0px 5px white);
-            }
+            .header-content { display: flex; align-items: center; gap: 20px; z-index: 1; }
+            .header-logo { width: 70px; height: auto; filter: drop-shadow(0px 0px 5px white); }
             .header-titles h1 { margin: 0; font-size: 24px; font-weight: 800; text-transform: uppercase; }
             .header-titles p { margin: 0; font-size: 14px; opacity: 0.9; }
 
             /* --- LAYOUT STYLE --- */
             #wrapper { display: flex; width: 100%; height: calc(100vh - 120px); transition: all 0.3s; }
-            #sidebar { min-width: 350px; max-width: 350px; background: #ffffff; transition: all 0.3s; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.1); z-index: 1050; }
+            #sidebar { min-width: 350px; max-width: 350px; background: #f8f9fa; transition: all 0.3s; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.1); z-index: 1050; }
             #sidebar.active { margin-left: -350px; }
-            
             .content-area { padding: 20px; flex-grow: 1; overflow-y: auto; }
             #map-container { flex-grow: 1; position: relative; }
             #map { width: 100%; height: 100%; }
-            
             #sidebarCollapse { position: absolute; top: 20px; left: 20px; z-index: 1000; background: #1a252f; color: white; border: none; border-radius: 5px; padding: 10px 15px; cursor: pointer; }
             
+            /* --- CARD MENU & INFO PANEL --- */
             .card-menu { background: #fff; border-radius: 10px; padding: 15px; margin-bottom: 15px; border: 1px solid #eef0f2; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
             .card-menu h6 { font-weight: 700; color: #1a252f; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #3498db; padding-bottom: 8px; }
             
+            .info-item { margin-bottom: 10px; font-size: 14px; }
+            .info-label { font-weight: bold; color: #7f8c8d; display: block; font-size: 11px; text-transform: uppercase; }
+            .info-value { color: #2c3e50; font-weight: 600; font-size: 15px; }
+
             .btn-pdf { background: #e74c3c; color: white; width: 100%; border: none; margin-top: 10px; font-weight: 600; padding: 10px; border-radius: 8px; }
             .btn-pdf:hover { background: #c0392b; color: white; }
             
@@ -78,12 +72,6 @@
 
             /* --- PDF TEMPLATE --- */
             #pdf-report-template { display: none; background: white; padding: 40px; width: 1000px; }
-            .report-header { text-align: center; border-bottom: 3px solid #1a252f; padding-bottom: 20px; margin-bottom: 20px; }
-            .report-logo { width: 100px; margin-bottom: 10px; }
-            .report-title { font-size: 24px; font-weight: bold; text-transform: uppercase; }
-            .info-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
-            .info-table td { padding: 10px; border: 1px solid #ddd; }
-            .info-label { background: #f8f9fa; font-weight: bold; width: 30%; }
         </style>
     </head>
     <body>
@@ -91,7 +79,6 @@
         <header class="header-banner">
             <video autoplay muted loop playsinline class="header-video">
                 <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-technology-digital-interface-background-31776-large.mp4" type="video/mp4">
-                Your browser does not support the video tag.
             </video>
             <div class="header-content">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Logo_Politeknik_Ungku_Omar.png" alt="Logo PUO" class="header-logo">
@@ -105,15 +92,37 @@
         <div id="wrapper">
             <nav id="sidebar">
                 <div class="content-area">
+                    
+                    <div class="card-menu" id="infoPanel">
+                        <h6><i class="fas fa-info-circle text-danger"></i> Maklumat Lot</h6>
+                        <div id="detailsPlaceholder" class="text-muted small text-center py-3">
+                            Sila klik pada lot di dalam peta atau cari di bawah.
+                        </div>
+                        <div id="lotDetails" style="display: none;">
+                            <div class="info-item">
+                                <span class="info-label">Nombor Lot</span>
+                                <span class="info-value" id="disp-no-lot">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Nama Pemilik</span>
+                                <span class="info-value" id="disp-pemilik">Hamba Allah</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Luas Kawasan</span>
+                                <span class="info-value" id="disp-luas">-</span>
+                            </div>
+                            <button class="btn btn-pdf" id="generateLotPDF">
+                                <i class="fas fa-file-pdf me-2"></i> Jana PDF
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="card-menu">
                         <h6><i class="fas fa-search-location text-primary"></i> Land Explorer</h6>
                         <label class="small text-muted mb-2">Pilih Nombor Lot:</label>
                         <select id="lotSelector" class="form-select mb-3">
                             <option value="">-- Carian Lot --</option>
                         </select>
-                        <button class="btn btn-pdf" id="generateLotPDF">
-                            <i class="fas fa-file-pdf me-2"></i> Jana Laporan PDF
-                        </button>
                     </div>
 
                     <div class="card-menu">
@@ -132,6 +141,7 @@
                         <h6><i class="fas fa-sliders-h text-warning"></i> Lot Opacity</h6>
                         <input type="range" class="form-range" id="opacitySlider" min="0" max="1" step="0.1" value="0.2">
                     </div>
+
                 </div>
             </nav>
 
@@ -142,20 +152,17 @@
         </div>
 
         <div id="pdf-report-template">
-            <div class="report-header">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Logo_Politeknik_Ungku_Omar.png" class="report-logo">
-                <div class="report-title">Laporan Maklumat Lot Digital</div>
-                <div>Politeknik Ungku Omar - Jabatan Geomatik</div>
+            <div style="text-align: center; border-bottom: 3px solid #1a252f; padding-bottom: 20px;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Logo_Politeknik_Ungku_Omar.png" style="width:100px;">
+                <h2 style="text-transform:uppercase;">Laporan Maklumat Lot Digital</h2>
+                <p>Politeknik Ungku Omar - Jabatan Geomatik</p>
             </div>
-            <table class="info-table">
-                <tr><td class="info-label">Nama Pemilik</td><td id="pdf-nama-pemilik">Hamba Allah</td></tr>
-                <tr><td class="info-label">Nombor Lot</td><td id="pdf-no-lot">-</td></tr>
-                <tr><td class="info-label">Luas Kawasan</td><td id="pdf-luas-lot">-</td></tr>
+            <table style="width:100%; margin-top:20px; border-collapse: collapse;">
+                <tr><td style="padding:10px; border:1px solid #ddd; background:#f8f9fa; font-weight:bold;">Nama Pemilik</td><td style="padding:10px; border:1px solid #ddd;" id="pdf-nama-pemilik"></td></tr>
+                <tr><td style="padding:10px; border:1px solid #ddd; background:#f8f9fa; font-weight:bold;">Nombor Lot</td><td style="padding:10px; border:1px solid #ddd;" id="pdf-no-lot"></td></tr>
+                <tr><td style="padding:10px; border:1px solid #ddd; background:#f8f9fa; font-weight:bold;">Luas Kawasan</td><td style="padding:10px; border:1px solid #ddd;" id="pdf-luas-lot"></td></tr>
             </table>
             <div id="pdf-map-output" style="margin-top: 20px; text-align: center;"></div>
-            <div style="margin-top: 30px; font-size: 10px; color: grey; text-align: center;">
-                Laporan ini dijana secara automatik pada: <span id="pdf-date"></span>
-            </div>
         </div>
 
         <script src="js/leaflet.js"></script>
@@ -165,84 +172,88 @@
 
         <script>
             $(document).ready(function () {
-                $('#sidebarCollapse').on('click', function () {
-                    $('#sidebar').toggleClass('active');
-                });
+                $('#sidebarCollapse').on('click', function () { $('#sidebar').toggleClass('active'); });
             });
 
-            // Initialize Map
             var map = L.map('map', { zoomControl: false, maxZoom: 28 }).fitBounds([[2.1037736019943134,102.52127453712016],[2.103942975429596,102.52154860320705]]);
             L.control.zoom({ position: 'topright' }).addTo(map);
 
-            // Basemaps
             var layer_GoogleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 28 }).addTo(map);
             var layer_GoogleStreet = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 28 });
 
             function changeBasemap(type) {
                 $('.basemap-item').removeClass('active');
-                if(type === 'sat') { 
-                    map.addLayer(layer_GoogleSatellite); 
-                    map.removeLayer(layer_GoogleStreet); 
-                    $('#btn-sat').addClass('active'); 
-                } else { 
-                    map.addLayer(layer_GoogleStreet); 
-                    map.removeLayer(layer_GoogleSatellite); 
-                    $('#btn-street').addClass('active'); 
-                }
+                if(type === 'sat') { map.addLayer(layer_GoogleSatellite); map.removeLayer(layer_GoogleStreet); $('#btn-sat').addClass('active'); }
+                else { map.addLayer(layer_GoogleStreet); map.removeLayer(layer_GoogleSatellite); $('#btn-street').addClass('active'); }
             }
 
-            // GeoJSON Lot Layer
+            // Fungsi kemaskini panel maklumat
+            function updateInfoPanel(props) {
+                $('#detailsPlaceholder').hide();
+                $('#lotDetails').fadeIn();
+                
+                $('#disp-no-lot').text(props['NO LOT'] || 'N/A');
+                $('#disp-luas').text((props['AREA'] || '0') + ' m²');
+                // Anda boleh menambah logik nama pemilik jika ada dalam GeoJSON
+                $('#disp-pemilik').text(props['OWNER'] || 'Hamba Allah'); 
+
+                // Kemaskini selector supaya selari
+                $('#lotSelector').val(props['NO LOT']);
+            }
+
             var layer_LOTFINAL_0 = L.geoJson(json_LOTFINAL_0, {
                 style: { color: 'yellow', weight: 2, fillColor: '#85b66f', fillOpacity: 0.2 },
                 onEachFeature: function(feature, layer) {
-                    layer.bindPopup("<b>Lot:</b> " + feature.properties['NO LOT']);
+                    // Masukkan senarai ke selector
                     if (feature.properties['NO LOT']) {
                         $('#lotSelector').append(`<option value="${feature.properties['NO LOT']}" data-area="${feature.properties['AREA']}">Lot ${feature.properties['NO LOT']}</option>`);
                     }
+
+                    // Event apabila LOT DIKLIK
+                    layer.on('click', function(e) {
+                        L.DomEvent.stopPropagation(e);
+                        updateInfoPanel(feature.properties);
+                        map.fitBounds(layer.getBounds());
+                    });
                 }
             }).addTo(map);
 
-            // UI Interaction
             $('#opacitySlider').on('input', function() { layer_LOTFINAL_0.setStyle({ fillOpacity: $(this).val() }); });
 
+            // Event apabila LOT DIPILIH dari Dropdown
             $('#lotSelector').on('change', function() {
                 var val = $(this).val();
+                if(!val) return;
                 layer_LOTFINAL_0.eachLayer(function(layer) {
                     if (layer.feature.properties['NO LOT'] == val) {
+                        updateInfoPanel(layer.feature.properties);
                         map.fitBounds(layer.getBounds(), {padding: [50, 50]});
                         layer.openPopup();
                     }
                 });
             });
 
-            // PDF Generation
+            // PDF Generation (Ambil data dari panel maklumat)
             $('#generateLotPDF').on('click', function() {
-                var lotSelector = document.getElementById('lotSelector');
-                var selectedOption = lotSelector.options[lotSelector.selectedIndex];
-                var lotNo = lotSelector.value;
-                var lotArea = selectedOption.getAttribute('data-area');
-
-                if(!lotNo) return alert("Sila pilih lot terlebih dahulu!");
+                var lotNo = $('#disp-no-lot').text();
+                var lotArea = $('#disp-luas').text();
+                var lotOwner = $('#disp-pemilik').text();
 
                 document.getElementById('pdf-no-lot').innerText = lotNo;
-                document.getElementById('pdf-luas-lot').innerText = lotArea + " m²";
-                document.getElementById('pdf-date').innerText = new Date().toLocaleString();
+                document.getElementById('pdf-luas-lot').innerText = lotArea;
+                document.getElementById('pdf-nama-pemilik').innerText = lotOwner;
 
-                var mapElement = document.getElementById('map');
-                html2canvas(mapElement, { useCORS: true }).then(canvas => {
+                html2canvas(document.getElementById('map'), { useCORS: true }).then(canvas => {
                     var imgData = canvas.toDataURL('image/png');
-                    document.getElementById('pdf-map-output').innerHTML = `<img src="${imgData}" style="width:100%; border:1px solid #333;">`;
-
+                    document.getElementById('pdf-map-output').innerHTML = `<img src="${imgData}" style="width:100%; border:1px solid #333; margin-top:20px;">`;
+                    
                     var element = document.getElementById('pdf-report-template');
                     element.style.display = 'block';
-
                     html2pdf().set({
                         margin: 0.5,
                         filename: 'Laporan_Lot_' + lotNo + '.pdf',
                         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-                    }).from(element).save().then(() => {
-                        element.style.display = 'none';
-                    });
+                    }).from(element).save().then(() => { element.style.display = 'none'; });
                 });
             });
 
