@@ -17,7 +17,6 @@
         <style>
             body, html { height: 100%; margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
             
-            /* --- HEADER VIDEO SECTION --- */
             header {
                 position: relative; height: 120px; width: 100%; overflow: hidden;
                 display: flex; align-items: center; justify-content: center; color: white;
@@ -35,7 +34,6 @@
             .header-titles h1 { margin: 0; font-size: 24px; font-weight: 800; text-transform: uppercase; text-align: right; }
             .header-titles p { margin: 0; font-size: 14px; opacity: 0.9; text-align: right; }
 
-            /* --- LAYOUT STRUCTURE --- */
             #wrapper { display: flex; width: 100%; height: calc(100vh - 120px); }
             #sidebar { min-width: 340px; max-width: 340px; background: #fdfdfd; transition: 0.3s; display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.1); z-index: 1050; }
             #sidebar.active { margin-left: -340px; }
@@ -45,7 +43,6 @@
             
             #sidebarCollapse { position: absolute; top: 15px; left: 15px; z-index: 1000; background: #1a252f; color: white; border: none; border-radius: 5px; padding: 10px 15px; cursor: pointer; }
 
-            /* --- SIDEBAR COMPONENTS --- */
             .card-menu { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
             .card-menu h6 { font-weight: 700; color: #1a252f; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #e74c3c; padding-bottom: 8px; }
             
@@ -60,13 +57,11 @@
             .basemap-item { cursor: pointer; border: 2px solid #f1f1f1; border-radius: 8px; padding: 8px; text-align: center; font-size: 12px; }
             .basemap-item.active { border-color: #e74c3c; background: #fef2f2; font-weight: bold; }
 
-            /* --- OVERLAY --- */
             #loading-overlay {
                 display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); 
                 z-index: 9999; color:white; text-align:center; padding-top:20%; font-size: 18px;
             }
 
-            /* --- PDF TEMPLATE --- */
             #pdf-report-template { display: none; background: white; padding: 40px; width: 800px; }
         </style>
     </head>
@@ -108,7 +103,7 @@
                             </div>
                             <div class="info-box">
                                 <span class="info-label">Pemilik</span>
-                                <span class="info-value">Jabatan Geomatik (PUO)</span>
+                                <span class="info-value" id="res-pemilik">-</span>
                             </div>
                             <button class="btn btn-pdf" onclick="cetakPDF()">
                                 <i class="fas fa-print me-2"></i> CETAK LAPORAN PDF
@@ -160,6 +155,10 @@
                     <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-lot"></td>
                 </tr>
                 <tr>
+                    <td style="padding: 12px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold;">Pemilik</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-owner"></td>
+                </tr>
+                <tr>
                     <td style="padding: 12px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold;">Keluasan</td>
                     <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-area"></td>
                 </tr>
@@ -178,18 +177,14 @@
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
         <script>
-            // Global Variables
             var highlightLayer;
             window.selectedLotData = null;
 
-            // Sidebar Toggle
             $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
 
-            // Initialize Map
             var map = L.map('map', { zoomControl: false }).setView([2.10385, 102.5214], 19);
             L.control.zoom({ position: 'topright' }).addTo(map);
 
-            // Basemaps
             var satLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22 }).addTo(map);
             var strLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 22 });
 
@@ -199,7 +194,23 @@
                 else { map.addLayer(strLayer); map.removeLayer(satLayer); $('#b-str').addClass('active'); }
             }
 
-            // Highlight Logic
+            // Fungsi untuk mendapatkan nama pemilik secara dinamik
+            function getOwnerName(props) {
+                // Sila tukar 'OWNER' kepada nama field sebenar dalam file LOTFINAL_0.js anda jika berbeza
+                return props['OWNER'] || props['Pemilik'] || 'Jabatan Geomatik (PUO)';
+            }
+
+            function updatePanel(props) {
+                $('#placeholderText').hide();
+                $('#lotDataDisplay').fadeIn();
+                
+                $('#res-no-lot').text(props['NO LOT'] || 'N/A');
+                $('#res-luas').text((props['AREA'] || '0') + ' m²');
+                $('#res-pemilik').text(getOwnerName(props));
+                
+                $('#lotSearchSelector').val(props['NO LOT']);
+            }
+
             function highlightFeature(e) {
                 if (highlightLayer) { lotLayer.resetStyle(highlightLayer); }
                 highlightLayer = (e.target) ? e.target : e;
@@ -209,15 +220,6 @@
                 updatePanel(window.selectedLotData);
             }
 
-            function updatePanel(props) {
-                $('#placeholderText').hide();
-                $('#lotDataDisplay').fadeIn();
-                $('#res-no-lot').text(props['NO LOT'] || 'N/A');
-                $('#res-luas').text((props['AREA'] || '0') + ' m²');
-                $('#lotSearchSelector').val(props['NO LOT']);
-            }
-
-            // Load GeoJSON
             var lotLayer = L.geoJson(json_LOTFINAL_0, {
                 style: { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 },
                 onEachFeature: function(feature, layer) {
@@ -232,9 +234,9 @@
                 }
             }).addTo(map);
 
-            // Search Function
             $('#lotSearchSelector').change(function() {
                 var val = $(this).val();
+                if(!val) return;
                 lotLayer.eachLayer(function(layer) {
                     if (layer.feature.properties['NO LOT'] == val) {
                         map.fitBounds(layer.getBounds());
@@ -243,23 +245,21 @@
                 });
             });
 
-            // Opacity Slider
             $('#opSlider').on('input', function() {
                 lotLayer.setStyle({ fillOpacity: $(this).val() });
             });
 
-            // PDF Generation Function
             async function cetakPDF() {
                 if (!window.selectedLotData) { alert("Pilih lot dahulu!"); return; }
                 
                 document.getElementById('loading-overlay').style.display = 'block';
                 
-                // Update Template
+                // Update Template PDF
                 $('#pdf-lot').text(window.selectedLotData['NO LOT']);
+                $('#pdf-owner').text(getOwnerName(window.selectedLotData));
                 $('#pdf-area').text(window.selectedLotData['AREA'] + ' m²');
                 $('#pdf-time').text(new Date().toLocaleString('ms-MY'));
 
-                // Capture Map
                 html2canvas(document.getElementById('map'), {
                     useCORS: true,
                     ignoreElements: (el) => el.id === 'sidebarCollapse' || el.classList.contains('leaflet-control-zoom')
