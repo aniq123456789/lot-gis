@@ -38,7 +38,7 @@
 
             .logo-container { display: flex; align-items: center; gap: 15px; }
             
-            /* Logo Poli_Logo.png di belah kiri sekali */
+            /* Logo Poli_Logo.png di belah kiri */
             .logo-poli { 
                 height: 80px; 
                 width: auto; 
@@ -46,7 +46,6 @@
                 filter: drop-shadow(0px 0px 5px rgba(255,255,255,0.4));
             }
             
-            /* Logo PUO */
             .logo-puo { 
                 height: 85px; 
                 width: auto; 
@@ -67,8 +66,7 @@
             
             #sidebarCollapse { position: absolute; top: 15px; left: 15px; z-index: 1000; background: #1a252f; color: white; border: none; border-radius: 5px; padding: 10px 15px; cursor: pointer; }
 
-            /* --- CARDS & INFO --- */
-            .card-menu { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+            .card-menu { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #eee; }
             .card-menu h6 { font-weight: 700; color: #1a252f; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #e74c3c; padding-bottom: 8px; }
             
             .info-box { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #e74c3c; margin-bottom: 10px; }
@@ -77,10 +75,6 @@
 
             .btn-pdf { background: #d9534f; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: 600; transition: 0.3s; margin-top: 5px; }
             .btn-pdf:hover { background: #c9302c; transform: translateY(-2px); color: white; }
-
-            .basemap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-            .basemap-item { cursor: pointer; border: 2px solid #f1f1f1; border-radius: 8px; padding: 8px; text-align: center; font-size: 12px; }
-            .basemap-item.active { border-color: #e74c3c; background: #fef2f2; font-weight: bold; }
 
             /* --- OVERLAY & PDF --- */
             #loading-overlay {
@@ -113,12 +107,10 @@
         <div id="wrapper">
             <nav id="sidebar">
                 <div class="content-area">
-                    
                     <div class="card-menu">
                         <h6><i class="fas fa-file-invoice text-danger"></i> Butiran Lot Terpilih</h6>
                         <div id="placeholderText" class="text-center py-3 text-muted small">
-                            <i class="fas fa-mouse-pointer mb-2" style="font-size: 20px;"></i><br>
-                            Sila klik pada lot di dalam peta untuk melihat maklumat.
+                            Sila klik lot atau buat carian.
                         </div>
                         <div id="lotDataDisplay" style="display: none;">
                             <div class="info-box">
@@ -131,7 +123,7 @@
                             </div>
                             <div class="info-box">
                                 <span class="info-label">Pemilik</span>
-                                <span class="info-value" id="res-owner">Jabatan Geomatik (PUO)</span>
+                                <span class="info-value" id="res-owner">-</span>
                             </div>
                             <button class="btn btn-pdf" onclick="cetakPDF()">
                                 <i class="fas fa-print me-2"></i> CETAK LAPORAN PDF
@@ -144,24 +136,6 @@
                         <select id="lotSearchSelector" class="form-select">
                             <option value="">-- Pilih Nombor Lot --</option>
                         </select>
-                        <button class="btn btn-sm btn-link w-100 mt-2 text-decoration-none" onclick="resetView()">Reset Peta</button>
-                    </div>
-
-                    <div class="card-menu">
-                        <h6><i class="fas fa-map text-success"></i> Jenis Peta</h6>
-                        <div class="basemap-grid">
-                            <div id="b-sat" class="basemap-item active" onclick="setBasemap('sat')">
-                                <i class="fas fa-satellite mb-1"></i><br>Satelit
-                            </div>
-                            <div id="b-str" class="basemap-item" onclick="setBasemap('str')">
-                                <i class="fas fa-road mb-1"></i><br>Jalan
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-menu">
-                        <h6><i class="fas fa-adjust text-warning"></i> Kelegapan Lot</h6>
-                        <input type="range" class="form-range" id="opSlider" min="0" max="1" step="0.1" value="0.3">
                     </div>
                 </div>
             </nav>
@@ -194,12 +168,8 @@
                     <td style="padding: 12px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold;">Keluasan</td>
                     <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-area"></td>
                 </tr>
-                <tr>
-                    <td style="padding: 12px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold;">Tarikh Dokumen</td>
-                    <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-time"></td>
-                </tr>
             </table>
-            <div id="pdf-map-capture" style="margin-top: 10px; text-align: center; border: 2px solid #eee; border-radius: 8px; overflow: hidden;"></div>
+            <div id="pdf-map-capture" style="text-align: center; border: 2px solid #eee; border-radius: 8px; overflow: hidden;"></div>
         </div>
 
         <script src="js/leaflet.js"></script>
@@ -210,51 +180,28 @@
             var highlightLayer;
             window.selectedLotData = null;
 
-            $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
-
             var map = L.map('map', { zoomControl: false }).setView([2.10385, 102.5214], 19);
-            L.control.zoom({ position: 'topright' }).addTo(map);
+            L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22 }).addTo(map);
 
-            var satLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22 }).addTo(map);
-            var strLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 22 });
-
-            function setBasemap(type) {
-                $('.basemap-item').removeClass('active');
-                if(type === 'sat') { map.addLayer(satLayer); map.removeLayer(strLayer); $('#b-sat').addClass('active'); } 
-                else { map.addLayer(strLayer); map.removeLayer(satLayer); $('#b-str').addClass('active'); }
-            }
-
-            // Fungsi ambil nama pemilik dari GeoJSON (Field: OWNER atau Pemilik)
+            // MENGAMBIL PEMILIK DARI MEDAN 'tsp — pe'
             function getOwner(props) {
-                return props['OWNER'] || props['Pemilik'] || 'Jabatan Geomatik (PUO)';
+                return props['tsp — pe'] || props['Pemilik'] || 'Tiada Maklumat';
             }
 
             function updatePanel(props) {
                 $('#placeholderText').hide();
                 $('#lotDataDisplay').fadeIn();
                 $('#res-no-lot').text(props['NO LOT'] || 'N/A');
-                $('#res-luas').text((props['AREA'] || '0') + ' m²');
-                $('#res-owner').text(getOwner(props));
-                $('#lotSearchSelector').val(props['NO LOT']);
+                $('#res-luas').text(parseFloat(props['AREA']).toFixed(3) + ' m²');
+                $('#res-owner').text(getOwner(props)); // Pemilik berubah di sini
+                window.selectedLotData = props;
             }
 
-            function highlightFeature(e) {
+            function highlightFeature(layer) {
                 if (highlightLayer) { lotLayer.resetStyle(highlightLayer); }
-                highlightLayer = (e.target) ? e.target : e;
+                highlightLayer = layer;
                 highlightLayer.setStyle({ weight: 4, color: '#ffff00', fillOpacity: 0.6 });
-                
-                window.selectedLotData = highlightLayer.feature.properties;
-                updatePanel(window.selectedLotData);
-                
-                // Popup interaktif
-                highlightLayer.bindPopup("<b>Lot: " + window.selectedLotData['NO LOT'] + "</b>").openPopup();
-            }
-
-            function resetView() {
-                map.fitBounds(lotLayer.getBounds());
-                if(highlightLayer) lotLayer.resetStyle(highlightLayer);
-                $('#lotDataDisplay').hide();
-                $('#placeholderText').show();
+                updatePanel(highlightLayer.feature.properties);
             }
 
             var lotLayer = L.geoJson(json_LOTFINAL_0, {
@@ -263,22 +210,14 @@
                     if (feature.properties['NO LOT']) {
                         $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
                     }
-                    layer.on({
-                        click: function(e) {
-                            L.DomEvent.stopPropagation(e);
-                            highlightFeature(e);
-                            map.fitBounds(layer.getBounds(), { padding: [30, 30] });
-                        },
-                        mouseover: function(e) {
-                            if(layer !== highlightLayer) layer.setStyle({fillOpacity: 0.7});
-                        },
-                        mouseout: function(e) {
-                            if(layer !== highlightLayer) lotLayer.resetStyle(layer);
-                        }
+                    layer.on('click', function(e) {
+                        highlightFeature(layer);
+                        map.fitBounds(layer.getBounds());
                     });
                 }
             }).addTo(map);
 
+            // CARIAN NO LOT
             $('#lotSearchSelector').change(function() {
                 var val = $(this).val();
                 lotLayer.eachLayer(function(layer) {
@@ -289,41 +228,26 @@
                 });
             });
 
-            $('#opSlider').on('input', function() {
-                lotLayer.setStyle({ fillOpacity: $(this).val() });
-            });
+            $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
 
             async function cetakPDF() {
-                if (!window.selectedLotData) { alert("Pilih lot dahulu!"); return; }
+                if (!window.selectedLotData) return;
                 document.getElementById('loading-overlay').style.display = 'block';
                 
                 $('#pdf-lot').text(window.selectedLotData['NO LOT']);
                 $('#pdf-owner').text(getOwner(window.selectedLotData));
-                $('#pdf-area').text(window.selectedLotData['AREA'] + ' m²');
-                $('#pdf-time').text(new Date().toLocaleString('ms-MY'));
+                $('#pdf-area').text(parseFloat(window.selectedLotData['AREA']).toFixed(3) + ' m²');
 
-                html2canvas(document.getElementById('map'), {
-                    useCORS: true,
-                    ignoreElements: (el) => el.id === 'sidebarCollapse' || el.classList.contains('leaflet-control-zoom')
-                }).then(canvas => {
-                    $('#pdf-map-capture').html(`<img src="${canvas.toDataURL('image/png')}" style="width:100%;">`);
+                html2canvas(document.getElementById('map'), { useCORS: true }).then(canvas => {
+                    $('#pdf-map-capture').html(`<img src="${canvas.toDataURL()}" style="width:100%;">`);
                     const element = document.getElementById('pdf-report-template');
                     element.style.display = 'block';
-                    
-                    html2pdf().set({
-                        margin: 0.4,
-                        filename: 'Laporan_Lot_' + window.selectedLotData['NO LOT'] + '.pdf',
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2 },
-                        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-                    }).from(element).save().then(() => {
+                    html2pdf().from(element).save().then(() => {
                         element.style.display = 'none';
                         document.getElementById('loading-overlay').style.display = 'none';
                     });
                 });
             }
-
-            L.control.scale({ imperial: false }).addTo(map);
         </script>
     </body>
 </html>
