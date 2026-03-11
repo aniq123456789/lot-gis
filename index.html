@@ -41,7 +41,7 @@
             
             #sidebarCollapse { position: absolute; top: 15px; left: 15px; z-index: 1000; background: #1a252f; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; }
 
-            /* --- SIDEBAR CARDS (image_f05a42.png) --- */
+            /* --- SIDEBAR CARDS --- */
             .card-menu { background: #fff; border-radius: 12px; padding: 15px; margin: 15px; border: 1px solid #eee; }
             .card-menu h6 { font-weight: 700; color: #1a252f; margin-bottom: 12px; border-bottom: 2px solid #e74c3c; padding-bottom: 8px; }
             
@@ -52,7 +52,6 @@
             .btn-pdf { background: #d9534f; color: white; width: 100%; border: none; padding: 14px; border-radius: 10px; font-weight: 700; text-transform: uppercase; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
             .btn-pdf:hover { background: #c9302c; }
 
-            /* --- LOADING OVERLAY --- */
             #loading-overlay {
                 display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); 
                 z-index: 9999; color:white; text-align:center; padding-top:20%; font-size: 20px;
@@ -123,12 +122,14 @@
             var highlightLayer;
             window.selectedLotData = { lot: "-", owner: "-", area: "-" };
 
-            // Inisialisasi Peta
             var map = L.map('map', { zoomControl: false }).setView([2.10385, 102.5214], 19);
             L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { 
                 maxZoom: 22, 
                 crossOrigin: 'anonymous' 
             }).addTo(map);
+
+            // Gaya asal lot
+            var defaultStyle = { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 };
 
             function highlightFeature(layer) {
                 lotLayer.eachLayer(l => lotLayer.resetStyle(l));
@@ -153,14 +154,46 @@
             }
 
             var lotLayer = L.geoJson(json_LOTFINAL_0, {
-                style: { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 },
+                style: defaultStyle,
                 onEachFeature: function(feature, layer) {
                     if (feature.properties['NO LOT']) {
                         $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
                     }
-                    layer.on('click', function() {
-                        highlightFeature(layer);
-                        map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+
+                    layer.on({
+                        // Kesan Hover (Mouse In)
+                        mouseover: function(e) {
+                            var l = e.target;
+                            // Hanya ubah gaya jika lot ini bukan lot yang sedang terpilih (highlighted)
+                            if (l !== highlightLayer) {
+                                l.setStyle({
+                                    weight: 3,
+                                    color: '#ffffff',
+                                    fillOpacity: 0.7
+                                });
+                                l.bringToFront();
+                            }
+                        },
+                        // Kesan Hover (Mouse Out)
+                        mouseout: function(e) {
+                            var l = e.target;
+                            if (l !== highlightLayer) {
+                                lotLayer.resetStyle(l);
+                            } else {
+                                // Kekalkan gaya highlight jika ia lot terpilih
+                                l.setStyle({ 
+                                    weight: 5, 
+                                    color: '#ffff00', 
+                                    fillColor: '#e74c3c', 
+                                    fillOpacity: 0.5 
+                                });
+                            }
+                        },
+                        // Fungsi Klik
+                        click: function(e) {
+                            highlightFeature(e.target);
+                            map.fitBounds(e.target.getBounds(), { padding: [50, 50] });
+                        }
                     });
                 }
             }).addTo(map);
@@ -177,29 +210,22 @@
 
             $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
 
-            // FUNGSI PENJANAAN PDF RASMI (A3 LANDSKAP)
             async function generateFinalPDF() {
                 document.getElementById('loading-overlay').style.display = "block";
-                
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('l', 'mm', 'a3'); 
                 
-                // Tangkap skrin peta semasa (dengan highlight poligon)
                 const canvas = await html2canvas(document.getElementById('map'), { 
                     useCORS: true, 
                     scale: 2 
                 });
                 const imgData = canvas.toDataURL('image/png');
 
-                // 1. Double Border
                 doc.setDrawColor(0);
                 doc.setLineWidth(1.2); doc.rect(10, 10, 400, 277);
                 doc.setLineWidth(0.3); doc.rect(12, 12, 396, 273);
-
-                // 2. Sidebar Laporan
                 doc.setLineWidth(0.8); doc.line(95, 10, 95, 287);
 
-                // 3. Header Rasmi (Times New Roman)
                 try {
                     const logo = document.getElementById("logoPuo");
                     doc.addImage(logo, 'PNG', 35, 18, 25, 28);
@@ -215,7 +241,6 @@
                 doc.text("DAERAH KINTA", 47.5, 75, {align: "center"});
                 doc.setTextColor(0); doc.text("SISTEM MAKLUMAT GEOMATIK", 47.5, 82, {align: "center"});
 
-                // 4. Maklumat Data Lot (Sidebar Kiri)
                 doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(100);
                 doc.text("INFORMASI LOT", 18, 100);
                 doc.setDrawColor(200); doc.line(18, 102, 87, 102);
@@ -232,16 +257,13 @@
                 for(let i=0; i<4; i++){
                     doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(120);
                     doc.text(labels[i], 18, currentY);
-                    
                     doc.setFont("times", "bold"); doc.setFontSize(12); doc.setTextColor(0);
                     let wrappedVal = doc.splitTextToSize(values[i], 68);
                     doc.text(wrappedVal, 18, currentY + 7);
                     currentY += 22;
                 }
 
-                // 5. Masukkan Gambar Peta (Highlighted Polygon)
                 doc.addImage(imgData, 'PNG', 97, 14, 308, 269);
-
                 doc.save(`Laporan_Lot_${window.selectedLotData.lot}.pdf`);
                 document.getElementById('loading-overlay').style.display = "none";
             }
