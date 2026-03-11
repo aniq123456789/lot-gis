@@ -37,20 +37,8 @@
             }
 
             .logo-container { display: flex; align-items: center; gap: 15px; }
-            
-            /* Logo Poli_Logo.png di belah kiri */
-            .logo-poli { 
-                height: 80px; 
-                width: auto; 
-                object-fit: contain;
-                filter: drop-shadow(0px 0px 5px rgba(255,255,255,0.4));
-            }
-            
-            .logo-puo { 
-                height: 85px; 
-                width: auto; 
-                object-fit: contain;
-            }
+            .logo-poli { height: 80px; width: auto; object-fit: contain; filter: drop-shadow(0px 0px 5px rgba(255,255,255,0.4)); }
+            .logo-puo { height: 85px; width: auto; object-fit: contain; }
 
             .header-titles { text-align: right; }
             .header-titles h1 { margin: 0; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -81,12 +69,13 @@
                 display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); 
                 z-index: 9999; color:white; text-align:center; padding-top:20%; font-size: 18px;
             }
-            #pdf-report-template { display: none; background: white; padding: 40px; width: 800px; }
+            #pdf-report-template { display: none; background: white; padding: 40px; width: 800px; color: #333; }
+            .pdf-header-text h2 { color: #e74c3c; font-weight: 800; margin: 0; }
         </style>
     </head>
     <body>
 
-        <div id="loading-overlay">Sila Tunggu, Menjana Laporan PDF...</div>
+        <div id="loading-overlay">Sila Tunggu, Menjana Laporan PDF Bersama Highlight...</div>
 
         <header>
             <video autoplay muted loop playsinline id="header-video">
@@ -147,29 +136,38 @@
         </div>
 
         <div id="pdf-report-template">
-            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #e74c3c; padding-bottom: 15px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid #e74c3c; padding-bottom: 15px; margin-bottom: 20px;">
                 <img src="Poli_Logo.png" style="height: 60px;">
-                <div style="text-align: center;">
-                    <h2 style="margin: 0;">LAPORAN MAKLUMAT LOT</h2>
-                    <p style="margin: 0; color: #666;">Politeknik Ungku Omar</p>
+                <div class="pdf-header-text" style="text-align: center;">
+                    <h2>LAPORAN MAKLUMAT LOT</h2>
+                    <p style="margin: 0; font-weight: bold;">Cempaka Digital Resident</p>
+                    <p style="margin: 0; font-size: 12px; color: #555;">Politeknik Ungku Omar, Ipoh, Perak</p>
                 </div>
                 <img src="image_247e7c.png" style="height: 70px;">
             </div>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 15px;">
                 <tr>
-                    <td style="padding: 12px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold; width: 30%;">Nombor Lot</td>
-                    <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-lot"></td>
+                    <td style="padding: 12px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold; width: 30%;">Nombor Lot</td>
+                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: 600;" id="pdf-lot"></td>
                 </tr>
                 <tr>
-                    <td style="padding: 12px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold;">Pemilik</td>
+                    <td style="padding: 12px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">Pemilik</td>
                     <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-owner"></td>
                 </tr>
                 <tr>
-                    <td style="padding: 12px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold;">Keluasan</td>
+                    <td style="padding: 12px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">Keluasan</td>
                     <td style="padding: 12px; border: 1px solid #ddd;" id="pdf-area"></td>
                 </tr>
             </table>
-            <div id="pdf-map-capture" style="text-align: center; border: 2px solid #eee; border-radius: 8px; overflow: hidden;"></div>
+
+            <h5 style="border-left: 5px solid #e74c3c; padding-left: 10px; margin-bottom: 15px;">Visual Lokasi Peta (Highlighted):</h5>
+            <div id="pdf-map-capture" style="text-align: center; border: 2px solid #ddd; border-radius: 8px; background: #eee; min-height: 350px;">
+                </div>
+            
+            <div style="margin-top: 30px; font-size: 10px; color: #888; text-align: right;">
+                Dicetak secara digital pada: <span id="pdf-date"></span>
+            </div>
         </div>
 
         <script src="js/leaflet.js"></script>
@@ -180,27 +178,45 @@
             var highlightLayer;
             window.selectedLotData = null;
 
-            var map = L.map('map', { zoomControl: false }).setView([2.10385, 102.5214], 19);
-            L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22 }).addTo(map);
+            // Inisialisasi Peta
+            var map = L.map('map', { zoomControl: false, preferCanvas: false }).setView([2.10385, 102.5214], 19);
+            L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { 
+                maxZoom: 22,
+                crossOrigin: true // Penting untuk html2canvas
+            }).addTo(map);
 
-            // MENGAMBIL PEMILIK DARI MEDAN 'tsp — pe'
             function getOwner(props) {
-                return props['tsp — pe'] || props['Pemilik'] || 'Tiada Maklumat';
+                return props['tsp — pe'] || props['Pemilik'] || 'Jabatan Geomatik (PUO)';
             }
 
             function updatePanel(props) {
                 $('#placeholderText').hide();
                 $('#lotDataDisplay').fadeIn();
                 $('#res-no-lot').text(props['NO LOT'] || 'N/A');
-                $('#res-luas').text(parseFloat(props['AREA']).toFixed(3) + ' m²');
-                $('#res-owner').text(getOwner(props)); // Pemilik berubah di sini
+                $('#res-luas').text(parseFloat(props['AREA']).toFixed(5) + ' m²');
+                $('#res-owner').text(getOwner(props));
                 window.selectedLotData = props;
             }
 
             function highlightFeature(layer) {
-                if (highlightLayer) { lotLayer.resetStyle(highlightLayer); }
+                // Reset semua style ke asal
+                lotLayer.eachLayer(function(l) {
+                    lotLayer.resetStyle(l);
+                });
+                
+                // Highlight layer yang dipilih
                 highlightLayer = layer;
-                highlightLayer.setStyle({ weight: 4, color: '#ffff00', fillOpacity: 0.6 });
+                highlightLayer.setStyle({ 
+                    weight: 5, 
+                    color: '#ffff00', // Warna Kuning Highlight
+                    fillColor: '#ffff00',
+                    fillOpacity: 0.5 
+                });
+                
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                    highlightLayer.bringToFront();
+                }
+                
                 updatePanel(highlightLayer.feature.properties);
             }
 
@@ -212,17 +228,18 @@
                     }
                     layer.on('click', function(e) {
                         highlightFeature(layer);
-                        map.fitBounds(layer.getBounds());
+                        map.fitBounds(layer.getBounds(), { padding: [50, 50] });
                     });
                 }
             }).addTo(map);
 
-            // CARIAN NO LOT
+            // Carian No Lot
             $('#lotSearchSelector').change(function() {
                 var val = $(this).val();
+                if(!val) return;
                 lotLayer.eachLayer(function(layer) {
                     if (layer.feature.properties['NO LOT'] == val) {
-                        map.fitBounds(layer.getBounds());
+                        map.fitBounds(layer.getBounds(), { padding: [50, 50] });
                         highlightFeature(layer);
                     }
                 });
@@ -230,22 +247,47 @@
 
             $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
 
+            // FUNGSI CETAK PDF DENGAN HIGHLIGHT
             async function cetakPDF() {
                 if (!window.selectedLotData) return;
+                
                 document.getElementById('loading-overlay').style.display = 'block';
                 
+                // Isi data ke template
                 $('#pdf-lot').text(window.selectedLotData['NO LOT']);
                 $('#pdf-owner').text(getOwner(window.selectedLotData));
-                $('#pdf-area').text(parseFloat(window.selectedLotData['AREA']).toFixed(3) + ' m²');
+                $('#pdf-area').text(parseFloat(window.selectedLotData['AREA']).toFixed(5) + ' m²');
+                $('#pdf-date').text(new Date().toLocaleString());
 
-                html2canvas(document.getElementById('map'), { useCORS: true }).then(canvas => {
-                    $('#pdf-map-capture').html(`<img src="${canvas.toDataURL()}" style="width:100%;">`);
+                // Tangkap skrin peta menggunakan html2canvas
+                // 'useCORS: true' penting untuk muat turun tiles Google Maps ke dalam canvas
+                html2canvas(document.getElementById('map'), { 
+                    useCORS: true,
+                    allowTaint: false,
+                    scale: 2 // Meningkatkan kualiti gambar peta
+                }).then(canvas => {
+                    const mapImg = canvas.toDataURL("image/png");
+                    $('#pdf-map-capture').html(`<img src="${mapImg}" style="width:100%; height: auto; display: block;">`);
+
                     const element = document.getElementById('pdf-report-template');
                     element.style.display = 'block';
-                    html2pdf().from(element).save().then(() => {
+
+                    const opt = {
+                        margin: 0.5,
+                        filename: `Laporan_Lot_${window.selectedLotData['NO LOT']}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true },
+                        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                    };
+
+                    html2pdf().set(opt).from(element).save().then(() => {
                         element.style.display = 'none';
                         document.getElementById('loading-overlay').style.display = 'none';
                     });
+                }).catch(err => {
+                    console.error("Ralat PDF:", err);
+                    alert("Gagal menjana visual peta. Sila cuba lagi.");
+                    document.getElementById('loading-overlay').style.display = 'none';
                 });
             }
         </script>
