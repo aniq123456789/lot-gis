@@ -16,6 +16,28 @@
 
         <style>
             body, html { height: 100%; margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
+            
+            /* --- LOGIN STYLING --- */
+            #login-overlay {
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+                z-index: 10000; display: flex; align-items: center; justify-content: center;
+            }
+            .login-card {
+                background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                width: 100%; max-width: 400px; text-align: center;
+            }
+            .login-card img { height: 70px; margin-bottom: 20px; }
+            .login-card h2 { font-weight: 800; color: #1a252f; margin-bottom: 5px; }
+            .login-card p { color: #7f8c8d; font-size: 14px; margin-bottom: 25px; }
+            .form-control { border-radius: 8px; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; }
+            .btn-login { 
+                background: #e74c3c; color: white; width: 100%; padding: 12px; 
+                border-radius: 8px; font-weight: 700; border: none; transition: 0.3s;
+            }
+            .btn-login:hover { background: #c0392b; transform: translateY(-2px); }
+
+            /* --- MAIN INTERFACE STYLING --- */
             header {
                 position: relative; height: 130px; width: 100%; overflow: hidden;
                 display: flex; align-items: center; justify-content: center; color: white;
@@ -36,35 +58,38 @@
             #map { width: 100%; height: 100%; }
             
             #sidebarCollapse { position: absolute; top: 15px; left: 15px; z-index: 1000; background: #1a252f; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; }
-
             .card-menu { background: #fff; border-radius: 12px; padding: 15px; margin: 15px; border: 1px solid #eee; }
             .card-menu h6 { font-weight: 700; color: #1a252f; margin-bottom: 12px; border-bottom: 2px solid #e74c3c; padding-bottom: 8px; }
-            
             .info-box { background: #f8f9fa; padding: 10px; border-radius: 8px; border-left: 5px solid #e74c3c; margin-bottom: 10px; }
             .info-label { font-size: 10px; text-transform: uppercase; color: #95a5a6; font-weight: 800; display: block; }
             .info-value { font-size: 15px; color: #2c3e50; font-weight: 700; display: block; }
-
             .btn-pdf { background: #27ae60; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: 700; transition: 0.3s; }
-            .btn-pdf:hover { background: #219150; transform: translateY(-2px); }
 
             #loading-overlay {
                 display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); 
                 z-index: 9999; color:white; text-align:center; padding-top:20%;
             }
-            
             .map-label-focused {
-                background: rgba(255, 255, 0, 0.9);
-                border: 2px solid #000;
-                padding: 4px 8px;
-                font-weight: bold;
-                color: #000;
-                border-radius: 4px;
-                white-space: nowrap;
-                font-size: 14px;
+                background: rgba(255, 255, 0, 0.9); border: 2px solid #000; padding: 4px 8px;
+                font-weight: bold; color: #000; border-radius: 4px; font-size: 14px;
             }
         </style>
     </head>
     <body>
+
+        <div id="login-overlay">
+            <div class="login-card">
+                <img src="image_247e7c.png" alt="Logo PUO">
+                <h2>Log Masuk</h2>
+                <p>Sistem Maklumat Lot Cempaka Resident</p>
+                <input type="text" id="username" class="form-control" placeholder="ID Pengguna">
+                <input type="password" id="password" class="form-control" placeholder="Kata Laluan">
+                <button class="btn-login" onclick="checkLogin()">MASUK SISTEM</button>
+                <div id="login-error" class="text-danger mt-3" style="display:none; font-size: 13px;">
+                    ID Pengguna atau Kata Laluan Salah!
+                </div>
+            </div>
+        </div>
 
         <div id="loading-overlay">
             <div class="spinner-border text-light mb-3"></div>
@@ -80,12 +105,12 @@
                 <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-technology-digital-interface-background-31776-large.mp4" type="video/mp4">
             </video>
             <div class="header-content">
-                <img src="Poli_Logo.png" class="logo-poli" id="mainPoliLogo">
+                <img src="Poli_Logo.png" class="logo-poli">
                 <div class="text-center">
                     <h1 class="m-0 fw-bold">Cempaka Digital Resident</h1>
                     <p class="m-0 text-warning">Sistem Maklumat Lot Tanah Terdigital (Jabatan Geomatik)</p>
                 </div>
-                <img src="image_247e7c.png" class="logo-puo" id="mainPuoLogo">
+                <img src="image_247e7c.png" class="logo-puo">
             </div>
         </header>
 
@@ -130,18 +155,40 @@
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
         <script>
+            // --- FUNGSI LOGIN ---
+            function checkLogin() {
+                const user = document.getElementById('username').value;
+                const pass = document.getElementById('password').value;
+                const errorMsg = document.getElementById('login-error');
+
+                if (user === "1" && pass === "admin") {
+                    document.getElementById('login-overlay').style.display = 'none';
+                    // Inisialisasi peta hanya selepas login (optional, but safer)
+                    map.invalidateSize();
+                } else {
+                    errorMsg.style.display = 'block';
+                    // Shake effect simple
+                    const card = document.querySelector('.login-card');
+                    card.style.animation = "shake 0.5s";
+                    setTimeout(() => card.style.animation = "", 500);
+                }
+            }
+
+            // Tambah sokongan butang "Enter" untuk login
+            document.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') { checkLogin(); }
+            });
+
+            // --- LOGIK PETA ---
             var highlightLayer;
             window.selectedLotData = { lot: "-", owner: "-", area: "-" };
 
             var map = L.map('map', { 
-                zoomControl: false, 
-                attributionControl: false,
-                preferCanvas: true 
+                zoomControl: false, attributionControl: false, preferCanvas: true 
             }).setView([2.10385, 102.5214], 19);
             
             var satelliteLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { 
-                maxZoom: 22, 
-                crossOrigin: 'anonymous' 
+                maxZoom: 22, crossOrigin: 'anonymous' 
             }).addTo(map);
 
             var lotLayer = L.geoJson(json_LOTFINAL_0, {
@@ -161,12 +208,10 @@
                 lotLayer.eachLayer(l => lotLayer.resetStyle(l));
                 highlightLayer = layer;
                 highlightLayer.setStyle({ weight: 5, color: '#ffff00', fillOpacity: 0.4 });
-                
                 var props = layer.feature.properties;
                 document.getElementById('res-no-lot').innerText = props['NO LOT'] || "-";
                 document.getElementById('res-owner').innerText = props['tsp — pe'] || props['Pemilik'] || "Jabatan Geomatik (PUO)";
                 document.getElementById('res-luas').innerText = (props['AREA'] ? parseFloat(props['AREA']).toFixed(3) + " m²" : "-");
-                
                 window.selectedLotData = {
                     lot: props['NO LOT'] || "-",
                     owner: props['tsp — pe'] || props['Pemilik'] || "Jabatan Geomatik (PUO)",
@@ -186,13 +231,9 @@
 
             $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
 
-            // --- FUNGSI JANA PDF DENGAN LOGO POLITEKNIK ---
+            // --- JANA PDF ---
             async function generateFinalPDF() {
-                if(window.selectedLotData.lot === "-") {
-                    alert("Sila pilih satu lot terlebih dahulu.");
-                    return;
-                }
-
+                if(window.selectedLotData.lot === "-") { alert("Sila pilih satu lot."); return; }
                 const overlay = document.getElementById('loading-overlay');
                 overlay.style.display = "block";
 
@@ -200,11 +241,7 @@
                     map.fitBounds(highlightLayer.getBounds(), { padding: [140, 140], animate: false });
                     var center = highlightLayer.getBounds().getCenter();
                     var tempMarker = L.marker(center, {
-                        icon: L.divIcon({
-                            className: 'map-label-focused',
-                            html: `LOT ${window.selectedLotData.lot}`,
-                            iconSize: [80, 30]
-                        })
+                        icon: L.divIcon({ className: 'map-label-focused', html: `LOT ${window.selectedLotData.lot}`, iconSize: [80, 30] })
                     }).addTo(map);
                 }
 
@@ -213,72 +250,36 @@
                 try {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF('l', 'mm', 'a3'); 
-                    
-                    const canvas = await html2canvas(document.getElementById('map'), { 
-                        useCORS: true, 
-                        scale: 3
-                    });
+                    const canvas = await html2canvas(document.getElementById('map'), { useCORS: true, scale: 3 });
                     const imgData = canvas.toDataURL('image/png');
 
-                    // --- REKABENTUK PDF ---
-                    doc.setDrawColor(30); doc.setLineWidth(1); doc.rect(10, 10, 400, 277);
-                    doc.line(95, 10, 95, 287); 
+                    doc.setDrawColor(30); doc.rect(10, 10, 400, 277); doc.line(95, 10, 95, 287); 
 
-                    // MEMASUKKAN LOGO (POLITEKNIK & PUO)
                     try {
-                        const logoPoli = document.getElementById("logoPoliRef");
-                        const logoPuo = document.getElementById("logoPuoRef");
-                        
-                        // Kedudukan Logo Poli (Kiri)
-                        doc.addImage(logoPoli, 'PNG', 20, 20, 25, 25);
-                        // Kedudukan Logo PUO (Kanan)
-                        doc.addImage(logoPuo, 'PNG', 65, 20, 22, 25);
-                    } catch(e) { console.error("Logo tidak ditemui", e); }
+                        doc.addImage(document.getElementById("logoPoliRef"), 'PNG', 20, 20, 25, 25);
+                        doc.addImage(document.getElementById("logoPuoRef"), 'PNG', 65, 20, 22, 25);
+                    } catch(e) {}
 
                     doc.setFont("times", "bold"); doc.setFontSize(16);
                     doc.text("LAPORAN RASMI", 52.5, 55, {align: "center"});
                     doc.text("LOT TANAH DIGITAL", 52.5, 62, {align: "center"});
-                    
-                    doc.setFontSize(10); doc.setFont("times", "italic");
-                    doc.text("Jabatan Geomatik, PUO", 52.5, 70, {align: "center"});
-                    
-                    doc.setDrawColor(231, 76, 60); doc.setLineWidth(0.8);
+                    doc.setFontSize(10); doc.text("Jabatan Geomatik, PUO", 52.5, 70, {align: "center"});
                     doc.line(20, 75, 85, 75);
 
-                    // Maklumat Data
                     let startY = 95;
-                    const data = [
-                        ["NOMBOR LOT", window.selectedLotData.lot],
-                        ["PEMILIK DAFTAR", window.selectedLotData.owner.toUpperCase()],
-                        ["KELUASAN", window.selectedLotData.area],
-                        ["TARIKH CETAK", new Date().toLocaleDateString('ms-MY')]
-                    ];
-
+                    const data = [["NOMBOR LOT", window.selectedLotData.lot], ["PEMILIK", window.selectedLotData.owner.toUpperCase()], ["KELUASAN", window.selectedLotData.area], ["TARIKH", new Date().toLocaleDateString('ms-MY')]];
                     data.forEach(row => {
                         doc.setFillColor(248, 249, 250); doc.rect(18, startY, 70, 20, 'F');
-                        doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(120);
-                        doc.text(row[0], 22, startY + 6);
-                        doc.setFont("times", "bold"); doc.setFontSize(11); doc.setTextColor(0); 
-                        let splitText = doc.splitTextToSize(row[1], 65);
-                        doc.text(splitText, 22, startY + 13);
+                        doc.setFontSize(8); doc.setTextColor(120); doc.text(row[0], 22, startY + 6);
+                        doc.setFontSize(11); doc.setTextColor(0); doc.text(doc.splitTextToSize(row[1], 65), 22, startY + 13);
                         startY += 28;
                     });
 
-                    // MASUKKAN GAMBAR PETA
                     doc.addImage(imgData, 'PNG', 97, 14, 308, 269);
-
-                    // Footer
-                    doc.setFontSize(8); doc.setTextColor(150);
-                    doc.text("Sistem Cempaka Digital Resident © 2026 - Unit Geomatik Politeknik Ungku Omar", 52.5, 275, {align: "center"});
-
-                    doc.save(`Laporan_Lot_${window.selectedLotData.lot}_PUO.pdf`);
-
-                } catch (err) {
-                    alert("Ralat menjana laporan.");
-                } finally {
-                    map.removeLayer(tempMarker);
-                    overlay.style.display = "none";
-                }
+                    doc.setFontSize(8); doc.text("Sistem Cempaka Digital Resident © 2026", 52.5, 275, {align: "center"});
+                    doc.save(`Laporan_Lot_${window.selectedLotData.lot}.pdf`);
+                } catch (err) { alert("Ralat menjana laporan."); }
+                finally { map.removeLayer(tempMarker); overlay.style.display = "none"; }
             }
         </script>
     </body>
