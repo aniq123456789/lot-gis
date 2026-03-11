@@ -69,13 +69,15 @@
                 display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); 
                 z-index: 9999; color:white; text-align:center; padding-top:20%; font-size: 18px;
             }
-            #pdf-report-template { display: none; background: white; padding: 40px; width: 800px; color: #333; }
-            .pdf-header-text h2 { color: #e74c3c; font-weight: 800; margin: 0; }
+            #pdf-report-template { 
+                position: absolute; left: -9999px; top: -9999px; /* Sembunyi luar skrin */
+                background: white; padding: 40px; width: 800px; color: #333; 
+            }
         </style>
     </head>
     <body>
 
-        <div id="loading-overlay">Sila Tunggu, Menjana Laporan PDF Bersama Highlight...</div>
+        <div id="loading-overlay">Menjana Laporan... Sila Tunggu Kedudukan Lot Diselaraskan.</div>
 
         <header>
             <video autoplay muted loop playsinline id="header-video">
@@ -138,10 +140,9 @@
         <div id="pdf-report-template">
             <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid #e74c3c; padding-bottom: 15px; margin-bottom: 20px;">
                 <img src="Poli_Logo.png" style="height: 60px;">
-                <div class="pdf-header-text" style="text-align: center;">
-                    <h2>LAPORAN MAKLUMAT LOT</h2>
+                <div style="text-align: center;">
+                    <h2 style="color: #e74c3c; margin: 0; font-weight: 800;">LAPORAN MAKLUMAT LOT</h2>
                     <p style="margin: 0; font-weight: bold;">Cempaka Digital Resident</p>
-                    <p style="margin: 0; font-size: 12px; color: #555;">Politeknik Ungku Omar, Ipoh, Perak</p>
                 </div>
                 <img src="image_247e7c.png" style="height: 70px;">
             </div>
@@ -149,7 +150,7 @@
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 15px;">
                 <tr>
                     <td style="padding: 12px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold; width: 30%;">Nombor Lot</td>
-                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: 600;" id="pdf-lot"></td>
+                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;" id="pdf-lot"></td>
                 </tr>
                 <tr>
                     <td style="padding: 12px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">Pemilik</td>
@@ -162,12 +163,10 @@
             </table>
 
             <h5 style="border-left: 5px solid #e74c3c; padding-left: 10px; margin-bottom: 15px;">Visual Lokasi Peta (Highlighted):</h5>
-            <div id="pdf-map-capture" style="text-align: center; border: 2px solid #ddd; border-radius: 8px; background: #eee; min-height: 350px;">
+            <div id="pdf-map-capture" style="width: 100%; height: 450px; border: 1px solid #ccc; overflow: hidden; position: relative;">
                 </div>
             
-            <div style="margin-top: 30px; font-size: 10px; color: #888; text-align: right;">
-                Dicetak secara digital pada: <span id="pdf-date"></span>
-            </div>
+            <p style="text-align: right; font-size: 10px; color: #777; margin-top: 20px;">Dicetak secara digital pada: <span id="pdf-date"></span></p>
         </div>
 
         <script src="js/leaflet.js"></script>
@@ -178,37 +177,28 @@
             var highlightLayer;
             window.selectedLotData = null;
 
-            // Inisialisasi Peta
-            var map = L.map('map', { zoomControl: false, preferCanvas: false }).setView([2.10385, 102.5214], 19);
+            // Inisialisasi Peta - Gunakan L.Canvas untuk render poligon yang lebih stabil
+            var map = L.map('map', { 
+                zoomControl: false, 
+                renderer: L.canvas() 
+            }).setView([2.10385, 102.5214], 19);
+
             L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { 
                 maxZoom: 22,
-                crossOrigin: true // Penting untuk html2canvas
+                crossOrigin: 'anonymous' 
             }).addTo(map);
 
             function getOwner(props) {
                 return props['tsp — pe'] || props['Pemilik'] || 'Jabatan Geomatik (PUO)';
             }
 
-            function updatePanel(props) {
-                $('#placeholderText').hide();
-                $('#lotDataDisplay').fadeIn();
-                $('#res-no-lot').text(props['NO LOT'] || 'N/A');
-                $('#res-luas').text(parseFloat(props['AREA']).toFixed(5) + ' m²');
-                $('#res-owner').text(getOwner(props));
-                window.selectedLotData = props;
-            }
-
             function highlightFeature(layer) {
-                // Reset semua style ke asal
-                lotLayer.eachLayer(function(l) {
-                    lotLayer.resetStyle(l);
-                });
+                lotLayer.eachLayer(function(l) { lotLayer.resetStyle(l); });
                 
-                // Highlight layer yang dipilih
                 highlightLayer = layer;
                 highlightLayer.setStyle({ 
                     weight: 5, 
-                    color: '#ffff00', // Warna Kuning Highlight
+                    color: '#ffff00', 
                     fillColor: '#ffff00',
                     fillOpacity: 0.5 
                 });
@@ -217,7 +207,13 @@
                     highlightLayer.bringToFront();
                 }
                 
-                updatePanel(highlightLayer.feature.properties);
+                var props = highlightLayer.feature.properties;
+                $('#placeholderText').hide();
+                $('#lotDataDisplay').fadeIn();
+                $('#res-no-lot').text(props['NO LOT'] || 'N/A');
+                $('#res-luas').text(parseFloat(props['AREA']).toFixed(5) + ' m²');
+                $('#res-owner').text(getOwner(props));
+                window.selectedLotData = props;
             }
 
             var lotLayer = L.geoJson(json_LOTFINAL_0, {
@@ -226,17 +222,15 @@
                     if (feature.properties['NO LOT']) {
                         $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
                     }
-                    layer.on('click', function(e) {
+                    layer.on('click', function() {
                         highlightFeature(layer);
                         map.fitBounds(layer.getBounds(), { padding: [50, 50] });
                     });
                 }
             }).addTo(map);
 
-            // Carian No Lot
             $('#lotSearchSelector').change(function() {
                 var val = $(this).val();
-                if(!val) return;
                 lotLayer.eachLayer(function(layer) {
                     if (layer.feature.properties['NO LOT'] == val) {
                         map.fitBounds(layer.getBounds(), { padding: [50, 50] });
@@ -247,48 +241,47 @@
 
             $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
 
-            // FUNGSI CETAK PDF DENGAN HIGHLIGHT
+            // FUNGSI UTAMA: PDF DENGAN KOORDINAT POLIGON YANG TEPAT
             async function cetakPDF() {
                 if (!window.selectedLotData) return;
                 
                 document.getElementById('loading-overlay').style.display = 'block';
                 
-                // Isi data ke template
+                // Kemaskini Data Laporan
                 $('#pdf-lot').text(window.selectedLotData['NO LOT']);
                 $('#pdf-owner').text(getOwner(window.selectedLotData));
                 $('#pdf-area').text(parseFloat(window.selectedLotData['AREA']).toFixed(5) + ' m²');
                 $('#pdf-date').text(new Date().toLocaleString());
 
-                // Tangkap skrin peta menggunakan html2canvas
-                // 'useCORS: true' penting untuk muat turun tiles Google Maps ke dalam canvas
-                html2canvas(document.getElementById('map'), { 
-                    useCORS: true,
-                    allowTaint: false,
-                    scale: 2 // Meningkatkan kualiti gambar peta
-                }).then(canvas => {
-                    const mapImg = canvas.toDataURL("image/png");
-                    $('#pdf-map-capture').html(`<img src="${mapImg}" style="width:100%; height: auto; display: block;">`);
+                // Memastikan peta dikemaskini sebelum tangkapan skrin
+                map.invalidateSize();
 
-                    const element = document.getElementById('pdf-report-template');
-                    element.style.display = 'block';
+                // Tunggu sebentar untuk rendering canvas selesai
+                setTimeout(() => {
+                    html2canvas(document.getElementById('map'), { 
+                        useCORS: true,
+                        allowTaint: false,
+                        logging: false,
+                        backgroundColor: null,
+                        scale: 2 
+                    }).then(canvas => {
+                        const imgData = canvas.toDataURL("image/png");
+                        $('#pdf-map-capture').html(`<img src="${imgData}" style="width:100%; position:absolute; top:50%; left:50%; transform: translate(-50%, -50%);">`);
 
-                    const opt = {
-                        margin: 0.5,
-                        filename: `Laporan_Lot_${window.selectedLotData['NO LOT']}.pdf`,
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2, useCORS: true },
-                        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-                    };
+                        const element = document.getElementById('pdf-report-template');
+                        const opt = {
+                            margin: 0.3,
+                            filename: `Laporan_Lot_${window.selectedLotData['NO LOT']}.pdf`,
+                            image: { type: 'jpeg', quality: 0.98 },
+                            html2canvas: { scale: 2, useCORS: true },
+                            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                        };
 
-                    html2pdf().set(opt).from(element).save().then(() => {
-                        element.style.display = 'none';
-                        document.getElementById('loading-overlay').style.display = 'none';
+                        html2pdf().set(opt).from(element).save().then(() => {
+                            document.getElementById('loading-overlay').style.display = 'none';
+                        });
                     });
-                }).catch(err => {
-                    console.error("Ralat PDF:", err);
-                    alert("Gagal menjana visual peta. Sila cuba lagi.");
-                    document.getElementById('loading-overlay').style.display = 'none';
-                });
+                }, 1000); // Delay 1 saat untuk memastikan poligon berada di tempat yang betul
             }
         </script>
     </body>
