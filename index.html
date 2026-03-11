@@ -52,7 +52,6 @@
                 z-index: 9999; color:white; text-align:center; padding-top:20%;
             }
             
-            /* Label khusus dalam peta semasa dijana */
             .map-label-focused {
                 background: rgba(255, 255, 0, 0.9);
                 border: 2px solid #000;
@@ -73,19 +72,20 @@
             <p>Sila tunggu, sistem sedang merakam kedudukan satelit lot.</p>
         </div>
 
-        <img id="logoPuo" src="image_247e7c.png" style="display:none;">
+        <img id="logoPuoRef" src="image_247e7c.png" style="display:none;">
+        <img id="logoPoliRef" src="Poli_Logo.png" style="display:none;">
 
         <header>
             <video autoplay muted loop playsinline id="header-video">
                 <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-technology-digital-interface-background-31776-large.mp4" type="video/mp4">
             </video>
             <div class="header-content">
-                <img src="Poli_Logo.png" class="logo-poli">
+                <img src="Poli_Logo.png" class="logo-poli" id="mainPoliLogo">
                 <div class="text-center">
                     <h1 class="m-0 fw-bold">Cempaka Digital Resident</h1>
                     <p class="m-0 text-warning">Sistem Maklumat Lot Tanah Terdigital (Jabatan Geomatik)</p>
                 </div>
-                <img src="image_247e7c.png" class="logo-puo">
+                <img src="image_247e7c.png" class="logo-puo" id="mainPuoLogo">
             </div>
         </header>
 
@@ -133,32 +133,36 @@
             var highlightLayer;
             window.selectedLotData = { lot: "-", owner: "-", area: "-" };
 
-            // Inisialisasi Peta
             var map = L.map('map', { 
                 zoomControl: false, 
                 attributionControl: false,
-                preferCanvas: true // Membantu kualiti render
+                preferCanvas: true 
             }).setView([2.10385, 102.5214], 19);
             
-            // Layer Satelit Google dengan CrossOrigin diaktifkan
             var satelliteLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { 
                 maxZoom: 22, 
                 crossOrigin: 'anonymous' 
             }).addTo(map);
 
-            var defaultStyle = { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 };
+            var lotLayer = L.geoJson(json_LOTFINAL_0, {
+                style: { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 },
+                onEachFeature: function(feature, layer) {
+                    if (feature.properties['NO LOT']) {
+                        $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
+                    }
+                    layer.on('click', function(e) {
+                        highlightFeature(e.target);
+                        map.flyToBounds(e.target.getBounds(), { padding: [100, 100] });
+                    });
+                }
+            }).addTo(map);
 
             function highlightFeature(layer) {
                 lotLayer.eachLayer(l => lotLayer.resetStyle(l));
                 highlightLayer = layer;
-                highlightLayer.setStyle({ 
-                    weight: 5, 
-                    color: '#ffff00', 
-                    fillColor: '#e74c3c', 
-                    fillOpacity: 0.4 
-                });
+                highlightLayer.setStyle({ weight: 5, color: '#ffff00', fillOpacity: 0.4 });
                 
-                var props = highlightLayer.feature.properties;
+                var props = layer.feature.properties;
                 document.getElementById('res-no-lot').innerText = props['NO LOT'] || "-";
                 document.getElementById('res-owner').innerText = props['tsp — pe'] || props['Pemilik'] || "Jabatan Geomatik (PUO)";
                 document.getElementById('res-luas').innerText = (props['AREA'] ? parseFloat(props['AREA']).toFixed(3) + " m²" : "-");
@@ -169,21 +173,6 @@
                     area: (props['AREA'] ? parseFloat(props['AREA']).toFixed(3) + " m²" : "-")
                 };
             }
-
-            var lotLayer = L.geoJson(json_LOTFINAL_0, {
-                style: defaultStyle,
-                onEachFeature: function(feature, layer) {
-                    if (feature.properties['NO LOT']) {
-                        $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
-                    }
-                    layer.on({
-                        click: function(e) {
-                            highlightFeature(e.target);
-                            map.flyToBounds(e.target.getBounds(), { padding: [100, 100] });
-                        }
-                    });
-                }
-            }).addTo(map);
 
             $('#lotSearchSelector').change(function() {
                 var val = $(this).val();
@@ -197,7 +186,7 @@
 
             $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
 
-            // --- FUNGSI JANA PDF: LOT DI TENGAH & SAMA DENGAN SATELIT ---
+            // --- FUNGSI JANA PDF DENGAN LOGO POLITEKNIK ---
             async function generateFinalPDF() {
                 if(window.selectedLotData.lot === "-") {
                     alert("Sila pilih satu lot terlebih dahulu.");
@@ -207,10 +196,8 @@
                 const overlay = document.getElementById('loading-overlay');
                 overlay.style.display = "block";
 
-                // 1. Kunci Peta & Letak Label Sementara
                 if(highlightLayer) {
                     map.fitBounds(highlightLayer.getBounds(), { padding: [140, 140], animate: false });
-                    
                     var center = highlightLayer.getBounds().getCenter();
                     var tempMarker = L.marker(center, {
                         icon: L.divIcon({
@@ -221,70 +208,73 @@
                     }).addTo(map);
                 }
 
-                // Tunggu 1.5 saat untuk tiles satelit load sepenuhnya (Sangat penting!)
                 await new Promise(r => setTimeout(r, 1500));
 
                 try {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF('l', 'mm', 'a3'); 
                     
-                    // Capture peta menggunakan html2canvas
                     const canvas = await html2canvas(document.getElementById('map'), { 
                         useCORS: true, 
-                        scale: 3, // Kualiti tinggi
-                        allowTaint: false,
-                        ignoreElements: (el) => el.id === 'sidebarCollapse'
+                        scale: 3
                     });
-                    
                     const imgData = canvas.toDataURL('image/png');
 
                     // --- REKABENTUK PDF ---
-                    // Bingkai & Sempadan
                     doc.setDrawColor(30); doc.setLineWidth(1); doc.rect(10, 10, 400, 277);
                     doc.line(95, 10, 95, 287); 
 
-                    // Header (Logo & Tajuk)
+                    // MEMASUKKAN LOGO (POLITEKNIK & PUO)
                     try {
-                        const logo = document.getElementById("logoPuo");
-                        doc.addImage(logo, 'PNG', 35, 20, 25, 30);
-                    } catch(e){}
+                        const logoPoli = document.getElementById("logoPoliRef");
+                        const logoPuo = document.getElementById("logoPuoRef");
+                        
+                        // Kedudukan Logo Poli (Kiri)
+                        doc.addImage(logoPoli, 'PNG', 20, 20, 25, 25);
+                        // Kedudukan Logo PUO (Kanan)
+                        doc.addImage(logoPuo, 'PNG', 65, 20, 22, 25);
+                    } catch(e) { console.error("Logo tidak ditemui", e); }
 
-                    doc.setFont("times", "bold"); doc.setFontSize(18);
-                    doc.text("LAPORAN LOT TANAH", 52.5, 65, {align: "center"});
-                    doc.setFontSize(12); doc.text("Unit Geomatik, PUO", 52.5, 72, {align: "center"});
+                    doc.setFont("times", "bold"); doc.setFontSize(16);
+                    doc.text("LAPORAN RASMI", 52.5, 55, {align: "center"});
+                    doc.text("LOT TANAH DIGITAL", 52.5, 62, {align: "center"});
                     
-                    // Maklumat Data Lot
-                    let startY = 100;
+                    doc.setFontSize(10); doc.setFont("times", "italic");
+                    doc.text("Jabatan Geomatik, PUO", 52.5, 70, {align: "center"});
+                    
+                    doc.setDrawColor(231, 76, 60); doc.setLineWidth(0.8);
+                    doc.line(20, 75, 85, 75);
+
+                    // Maklumat Data
+                    let startY = 95;
                     const data = [
-                        ["NO LOT", window.selectedLotData.lot],
-                        ["PEMILIK", window.selectedLotData.owner.toUpperCase()],
+                        ["NOMBOR LOT", window.selectedLotData.lot],
+                        ["PEMILIK DAFTAR", window.selectedLotData.owner.toUpperCase()],
                         ["KELUASAN", window.selectedLotData.area],
-                        ["KOORDINAT", `${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}`]
+                        ["TARIKH CETAK", new Date().toLocaleDateString('ms-MY')]
                     ];
 
                     data.forEach(row => {
-                        doc.setFillColor(245, 245, 245); doc.rect(18, startY, 70, 22, 'F');
-                        doc.setFontSize(9); doc.setTextColor(100); doc.text(row[0], 22, startY + 6);
-                        doc.setFontSize(11); doc.setTextColor(0); 
+                        doc.setFillColor(248, 249, 250); doc.rect(18, startY, 70, 20, 'F');
+                        doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(120);
+                        doc.text(row[0], 22, startY + 6);
+                        doc.setFont("times", "bold"); doc.setFontSize(11); doc.setTextColor(0); 
                         let splitText = doc.splitTextToSize(row[1], 65);
-                        doc.text(splitText, 22, startY + 14);
-                        startY += 30;
+                        doc.text(splitText, 22, startY + 13);
+                        startY += 28;
                     });
 
-                    // MASUKKAN GAMBAR PETA (LOT DI TENGAH)
-                    // x=97, y=14, lebar=308, tinggi=269
+                    // MASUKKAN GAMBAR PETA
                     doc.addImage(imgData, 'PNG', 97, 14, 308, 269);
 
-                    // Nota Kaki
+                    // Footer
                     doc.setFontSize(8); doc.setTextColor(150);
-                    doc.text("Cetakan Digital Sistem Cempaka Resident. Sahih pada waktu cetakan sahaja.", 52.5, 275, {align: "center"});
+                    doc.text("Sistem Cempaka Digital Resident © 2026 - Unit Geomatik Politeknik Ungku Omar", 52.5, 275, {align: "center"});
 
-                    // Simpan
-                    doc.save(`Laporan_Lot_${window.selectedLotData.lot}.pdf`);
+                    doc.save(`Laporan_Lot_${window.selectedLotData.lot}_PUO.pdf`);
 
                 } catch (err) {
-                    console.error("Gagal menjana PDF:", err);
-                    alert("Ralat teknikal berlaku semasa menjana laporan.");
+                    alert("Ralat menjana laporan.");
                 } finally {
                     map.removeLayer(tempMarker);
                     overlay.style.display = "none";
