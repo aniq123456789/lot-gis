@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-        <title>Cempaka Digital Resident - PUO</title>
+        <title>Saujana Putra Smart Resident - PUO</title>
         
         <link rel="stylesheet" href="css/leaflet.css">
         <link rel="stylesheet" href="css/fontawesome-all.min.css">
@@ -104,7 +104,7 @@
                     <img src="image_247e7c.png" alt="Logo PUO">
                 </div>
                 <h2>Log Masuk</h2>
-                <p>Sistem Maklumat Lot Cempaka Resident</p>
+                <p>Sistem Maklumat Lot Saujana Putra</p>
                 <input type="text" id="username" class="form-control" placeholder="ID Pengguna">
                 <input type="password" id="password" class="form-control" placeholder="Kata Laluan">
                 <button class="btn-login" onclick="checkLogin()">MASUK SISTEM</button>
@@ -130,7 +130,7 @@
             <div class="header-content">
                 <img src="Poli_Logo.png" class="logo-poli">
                 <div class="text-center">
-                    <h1 class="m-0 fw-bold">Cempaka Digital Resident</h1>
+                    <h1 class="m-0 fw-bold">Saujana Putra Smart Resident</h1>
                     <p class="m-0 text-warning">Sistem Maklumat Lot Tanah Terdigital (Jabatan Geomatik)</p>
                 </div>
                 <img src="image_247e7c.png" class="logo-puo">
@@ -348,7 +348,7 @@
                     });
 
                     doc.addImage(imgData, 'PNG', 97, 14, 308, 269);
-                    doc.setFontSize(8); doc.text("Sistem Cempaka Digital Resident © 2026", 52.5, 275, {align: "center"});
+                    doc.setFontSize(8); doc.text("Sistem Saujana Putra Smart Resident © 2026", 52.5, 275, {align: "center"});
                     doc.save(`Laporan_Lot_${window.selectedLotData.lot}.pdf`);
                 } catch (err) { alert("Ralat menjana laporan."); }
                 finally { if(tempMarker) map.removeLayer(tempMarker); overlay.style.display = "none"; }
