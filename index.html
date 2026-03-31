@@ -63,14 +63,17 @@
             .info-value { font-size: 15px; color: #2c3e50; font-weight: 700; display: block; }
             .btn-pdf { background: #27ae60; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: 700; transition: 0.3s; }
 
+            /* TOOLTIP STYLE */
             .leaflet-tooltip-own {
-                background: rgba(26, 37, 47, 0.9);
-                border: 1px solid #e74c3c;
-                border-radius: 5px;
-                color: white;
-                padding: 10px;
-                font-family: 'Poppins', sans-serif;
-                box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+                background: rgba(26, 37, 47, 0.95) !important;
+                border: 2px solid #e74c3c !important;
+                border-radius: 6px !important;
+                color: white !important;
+                padding: 8px 12px !important;
+                font-family: 'Poppins', sans-serif !important;
+                font-size: 11px !important;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
+                font-weight: 600;
             }
 
             #loading-overlay {
@@ -204,23 +207,41 @@
                 window.selectedLotData = { lot, owner, area };
             }
 
-            // --- FUNGSI REKURSIF UNTUK LUKIS BATU SEMPADAN ---
-            function drawBatuSempadan(coords) {
+            // --- LOGIK BARU: BATU SEMPADAN DENGAN KOORDINAT (HOVER) ---
+            function createPointMarker(latlng) {
+                // Ambil koordinat untuk dipaparkan
+                var lat = latlng.lat !== undefined ? latlng.lat : latlng[0];
+                var lng = latlng.lng !== undefined ? latlng.lng : latlng[1];
+
+                var marker = L.circleMarker(latlng, {
+                    radius: 7,            // SAIZ DIBESARKAN (Tadi 4)
+                    fillColor: "#ffff00", 
+                    color: "#000000",     
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 1,
+                    interactive: true,    // MESTI TRUE UNTUK TOOLTIP
+                    pane: 'markerPane'
+                }).addTo(map);
+
+                // Tooltip untuk paparkan koordinat bila mouse tunjuk
+                marker.bindTooltip(`
+                    <div style="text-align:center;">
+                        <span style="color:#e74c3c; font-weight:800;">BATU SEMPADAN</span><br>
+                        Lat: ${lat.toFixed(7)}<br>
+                        Lng: ${lng.toFixed(7)}
+                    </div>`, {
+                    sticky: true,
+                    className: 'leaflet-tooltip-own',
+                    offset: [0, -5]
+                });
+            }
+
+            function drawRecursivePoints(coords) {
                 if (Array.isArray(coords[0])) {
-                    // Jika ada nesting (array dalam array), kita panggil balik fungsi ni
-                    coords.forEach(drawBatuSempadan);
+                    coords.forEach(drawRecursivePoints);
                 } else {
-                    // Bila dah sampai tahap LatLng tunggal, baru kita lukis point
-                    L.circleMarker(coords, {
-                        radius: 4,         
-                        fillColor: "#ffff00", // Kuning supaya nampak atas satelit
-                        color: "#000000",     
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 1,
-                        interactive: false,
-                        pane: 'markerPane'    // Pastikan dia duduk atas poligon
-                    }).addTo(map);
+                    createPointMarker(coords);
                 }
             }
 
@@ -231,9 +252,9 @@
                         $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
                     }
 
-                    // PANGGIL FUNGSI LUKIS BATU SEMPADAN UNTUK SETIAP FEATURE
+                    // Lukis batu sempadan pada setiap bucu
                     if (layer.getLatLngs) {
-                        drawBatuSempadan(layer.getLatLngs());
+                        drawRecursivePoints(layer.getLatLngs());
                     }
 
                     layer.on('mouseover', function(e) {
