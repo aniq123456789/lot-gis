@@ -44,7 +44,7 @@
             #header-video {
                 position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%;
                 width: auto; height: auto; transform: translate(-50%, -50%);
-                z-index: -1; filter: brightness(25%); object-fit: cover;
+                z-index: -1; filter: brightness(40%); object-fit: cover;
             }
             .header-content { display: flex; align-items: center; width: 96%; justify-content: space-between; z-index: 1; }
             .logo-poli, .logo-puo { height: 80px; }
@@ -74,7 +74,6 @@
                 box-shadow: 0 3px 10px rgba(0,0,0,0.3);
             }
             
-            /* Style khas untuk tooltip koordinat batu sempadan */
             .tooltip-coordinate {
                 background: #27ae60 !important;
                 border: 1px solid #fff !important;
@@ -126,7 +125,7 @@
 
         <header>
             <video autoplay muted loop playsinline id="header-video">
-                <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-technology-digital-interface-background-31776-large.mp4" type="video/mp4">
+                <source src="video1.mp4" type="video/mp4">
             </video>
             <div class="header-content">
                 <img src="Poli_Logo.png" class="logo-poli">
@@ -233,10 +232,9 @@
                                 weight: 1,
                                 opacity: 1,
                                 fillOpacity: 1,
-                                interactive: true // Tukar kepada true supaya boleh hover
+                                interactive: true 
                             }).addTo(map);
 
-                            // PAPAR KOORDINAT APABILA MOUSE OVER PADA BATU SEMPADAN
                             marker.on('mouseover', function(e) {
                                 this.setStyle({ fillColor: '#27ae60', radius: 6 });
                                 var coordContent = `
@@ -259,13 +257,10 @@
                         });
                     }
 
-                    // FUNGSI MOUSEOVER (APABILA ARROW MELALUI LOT)
                     layer.on('mouseover', function(e) {
                         var layer = e.target;
                         layer.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
-                        
                         updateDisplay(layer.feature.properties);
-
                         var content = `
                             <div style="font-size:12px;">
                                 <b>LOT: ${layer.feature.properties['NO LOT']}</b><br>
@@ -276,14 +271,12 @@
                         layer.bindTooltip(content, { sticky: true, className: 'leaflet-tooltip-own' }).openTooltip();
                     });
 
-                    // FUNGSI MOUSEOUT (APABILA ARROW KELUAR DARI LOT)
                     layer.on('mouseout', function(e) {
                         if (highlightLayer !== e.target) {
                             lotLayer.resetStyle(e.target);
                         }
                     });
 
-                    // FUNGSI KLIK (UNTUK LOCK SELECTION)
                     layer.on('click', function(e) {
                         if (highlightLayer) { lotLayer.resetStyle(highlightLayer); }
                         highlightLayer = e.target;
