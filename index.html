@@ -63,7 +63,7 @@
             .info-value { font-size: 15px; color: #2c3e50; font-weight: 700; display: block; }
             .btn-pdf { background: #27ae60; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: 700; transition: 0.3s; }
 
-            /* TOOLTIP STYLE */
+            /* TOOLTIP KOORDINAT */
             .leaflet-tooltip-own {
                 background: rgba(26, 37, 47, 0.95) !important;
                 border: 2px solid #e74c3c !important;
@@ -71,7 +71,7 @@
                 color: white !important;
                 padding: 8px 12px !important;
                 font-family: 'Poppins', sans-serif !important;
-                font-size: 11px !important;
+                font-size: 12px !important;
                 box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
                 font-weight: 600;
             }
@@ -189,7 +189,7 @@
             }
 
             // --- MAP LOGIC ---
-            var map = L.map('map', { zoomControl: false, attributionControl: false, preferCanvas: true }).setView([2.10385, 102.5214], 19);
+            var map = L.map('map', { zoomControl: false, attributionControl: false }).setView([2.10385, 102.5214], 19);
             L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22, crossOrigin: 'anonymous' }).addTo(map);
 
             var highlightLayer;
@@ -199,37 +199,33 @@
                 const lot = props['NO LOT'] || "-";
                 const owner = props['tsp — pe'] || props['Pemilik'] || "Jabatan Geomatik (PUO)";
                 const area = props['AREA'] ? parseFloat(props['AREA']).toFixed(3) + " m²" : "-";
-
                 document.getElementById('res-no-lot').innerText = lot;
                 document.getElementById('res-owner').innerText = owner;
                 document.getElementById('res-luas').innerText = area;
-
                 window.selectedLotData = { lot, owner, area };
             }
 
-            // --- LOGIK BARU: BATU SEMPADAN DENGAN KOORDINAT (HOVER) ---
+            // --- FUNGSI LUKIS BATU (INDIVIDUAL) ---
             function createPointMarker(latlng) {
-                // Ambil koordinat untuk dipaparkan
                 var lat = latlng.lat !== undefined ? latlng.lat : latlng[0];
                 var lng = latlng.lng !== undefined ? latlng.lng : latlng[1];
 
-                var marker = L.circleMarker(latlng, {
-                    radius: 7,            // SAIZ DIBESARKAN (Tadi 4)
+                var marker = L.circleMarker([lat, lng], {
+                    radius: 8,            // SAIZ LAGI BESAR DARI SEBELUM NI
                     fillColor: "#ffff00", 
                     color: "#000000",     
                     weight: 2,
                     opacity: 1,
                     fillOpacity: 1,
-                    interactive: true,    // MESTI TRUE UNTUK TOOLTIP
+                    interactive: true,
                     pane: 'markerPane'
                 }).addTo(map);
 
-                // Tooltip untuk paparkan koordinat bila mouse tunjuk
                 marker.bindTooltip(`
                     <div style="text-align:center;">
                         <span style="color:#e74c3c; font-weight:800;">BATU SEMPADAN</span><br>
-                        Lat: ${lat.toFixed(7)}<br>
-                        Lng: ${lng.toFixed(7)}
+                        Latit: ${lat.toFixed(7)}<br>
+                        Dipat: ${lng.toFixed(7)}
                     </div>`, {
                     sticky: true,
                     className: 'leaflet-tooltip-own',
@@ -237,14 +233,21 @@
                 });
             }
 
+            // --- REKURSIF YANG DAH DIBETULKAN ---
             function drawRecursivePoints(coords) {
-                if (Array.isArray(coords[0])) {
-                    coords.forEach(drawRecursivePoints);
-                } else {
-                    createPointMarker(coords);
+                if (Array.isArray(coords) && coords.length > 0) {
+                    if (Array.isArray(coords[0])) {
+                        // Jika dalam dia ada array lagi, kita gali lagi
+                        coords.forEach(drawRecursivePoints);
+                    } else {
+                        // Jika ini array koordinat sebenar [lat, lng], lukis terus
+                        createPointMarker(coords);
+                    }
                 }
             }
 
+            // --- LOAD DATA ---
+            // Pastikan variable dalam LOTFINAL_0.js kau namanya 'json_LOTFINAL_0'
             var lotLayer = L.geoJson(json_LOTFINAL_0, {
                 style: { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 },
                 onEachFeature: function(feature, layer) {
@@ -252,29 +255,22 @@
                         $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
                     }
 
-                    // Lukis batu sempadan pada setiap bucu
+                    // Lukis batu sempadan pada bucu
                     if (layer.getLatLngs) {
-                        drawRecursivePoints(layer.getLatLngs());
+                        var allCoords = layer.getLatLngs();
+                        drawRecursivePoints(allCoords);
                     }
 
                     layer.on('mouseover', function(e) {
-                        var layer = e.target;
-                        layer.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
-                        updateDisplay(layer.feature.properties);
-                        var content = `
-                            <div style="font-size:12px;">
-                                <b>LOT: ${layer.feature.properties['NO LOT']}</b><br>
-                                Pemilik: ${layer.feature.properties['Pemilik'] || "PUO"}<br>
-                                Luas: ${parseFloat(layer.feature.properties['AREA']).toFixed(2)} m²
-                            </div>
-                        `;
-                        layer.bindTooltip(content, { sticky: true, className: 'leaflet-tooltip-own' }).openTooltip();
+                        var lyr = e.target;
+                        lyr.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
+                        updateDisplay(lyr.feature.properties);
+                        var content = `<b>LOT: ${lyr.feature.properties['NO LOT']}</b><br>Luas: ${parseFloat(lyr.feature.properties['AREA']).toFixed(2)} m²`;
+                        lyr.bindTooltip(content, { sticky: true, className: 'leaflet-tooltip-own' }).openTooltip();
                     });
 
                     layer.on('mouseout', function(e) {
-                        if (highlightLayer !== e.target) {
-                            lotLayer.resetStyle(e.target);
-                        }
+                        if (highlightLayer !== e.target) { lotLayer.resetStyle(e.target); }
                     });
 
                     layer.on('click', function(e) {
@@ -306,7 +302,6 @@
                 if(window.selectedLotData.lot === "-") { alert("Sila pilih satu lot."); return; }
                 const overlay = document.getElementById('loading-overlay');
                 overlay.style.display = "block";
-
                 let tempMarker;
                 if(highlightLayer) {
                     map.fitBounds(highlightLayer.getBounds(), { padding: [140, 140], animate: false });
@@ -315,28 +310,22 @@
                         icon: L.divIcon({ className: 'map-label-focused', html: `<div style="background:rgba(26,37,47,0.8); color:white; padding:2px 5px; border:1px solid red; border-radius:3px; font-weight:bold; font-size:10px;">LOT ${window.selectedLotData.lot}</div>`, iconSize: [80, 30] })
                     }).addTo(map);
                 }
-
                 await new Promise(r => setTimeout(r, 1500));
-
                 try {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF('l', 'mm', 'a3'); 
                     const canvas = await html2canvas(document.getElementById('map'), { useCORS: true, scale: 3 });
                     const imgData = canvas.toDataURL('image/png');
-
                     doc.setDrawColor(30); doc.rect(10, 10, 400, 277); doc.line(95, 10, 95, 287); 
-
                     try {
                         doc.addImage(document.getElementById("logoPoliRef"), 'PNG', 20, 20, 25, 25);
                         doc.addImage(document.getElementById("logoPuoRef"), 'PNG', 65, 20, 22, 25);
                     } catch(e) {}
-
                     doc.setFont("times", "bold"); doc.setFontSize(16);
                     doc.text("LAPORAN RASMI", 52.5, 55, {align: "center"});
                     doc.text("LOT TANAH DIGITAL", 52.5, 62, {align: "center"});
                     doc.setFontSize(10); doc.text("Jabatan Geomatik, PUO", 52.5, 70, {align: "center"});
                     doc.line(20, 75, 85, 75);
-
                     let startY = 95;
                     const data = [["NOMBOR LOT", window.selectedLotData.lot], ["PEMILIK", window.selectedLotData.owner.toUpperCase()], ["KELUASAN", window.selectedLotData.area], ["TARIKH", new Date().toLocaleDateString('ms-MY')]];
                     data.forEach(row => {
@@ -345,7 +334,6 @@
                         doc.setFontSize(11); doc.setTextColor(0); doc.text(doc.splitTextToSize(row[1], 65), 22, startY + 13);
                         startY += 28;
                     });
-
                     doc.addImage(imgData, 'PNG', 97, 14, 308, 269);
                     doc.setFontSize(8); doc.text("Sistem Cempaka Digital Resident © 2026", 52.5, 275, {align: "center"});
                     doc.save(`Laporan_Lot_${window.selectedLotData.lot}.pdf`);
