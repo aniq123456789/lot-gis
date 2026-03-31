@@ -73,6 +73,14 @@
                 font-family: 'Poppins', sans-serif;
                 box-shadow: 0 3px 10px rgba(0,0,0,0.3);
             }
+            
+            /* Style khas untuk tooltip koordinat batu sempadan */
+            .tooltip-coordinate {
+                background: #27ae60 !important;
+                border: 1px solid #fff !important;
+                font-weight: bold;
+                font-size: 11px;
+            }
 
             #loading-overlay {
                 display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); 
@@ -215,19 +223,39 @@
                     // --- TAMBAHAN: LUKIS BATU SEMPADAN (POINTS) PADA SETIAP BUCU ---
                     if (feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')) {
                         var coords = layer.getLatLngs();
-                        // Flatten array untuk handle Polygon (level 2) & MultiPolygon (level 3)
                         var vertices = feature.geometry.type === 'MultiPolygon' ? coords.flat(2) : coords[0];
 
                         vertices.forEach(function(latlng) {
-                            L.circleMarker(latlng, {
-                                radius: 3,         
+                            var marker = L.circleMarker(latlng, {
+                                radius: 4,          
                                 fillColor: "white", 
-                                color: "#000",     
+                                color: "#000",      
                                 weight: 1,
                                 opacity: 1,
                                 fillOpacity: 1,
-                                interactive: false 
+                                interactive: true // Tukar kepada true supaya boleh hover
                             }).addTo(map);
+
+                            // PAPAR KOORDINAT APABILA MOUSE OVER PADA BATU SEMPADAN
+                            marker.on('mouseover', function(e) {
+                                this.setStyle({ fillColor: '#27ae60', radius: 6 });
+                                var coordContent = `
+                                    <div style="text-align:center;">
+                                        <b style="color:#f1c40f;">BATU SEMPADAN</b><br>
+                                        Lat: ${latlng.lat.toFixed(7)}<br>
+                                        Lng: ${latlng.lng.toFixed(7)}
+                                    </div>
+                                `;
+                                this.bindTooltip(coordContent, { 
+                                    sticky: true, 
+                                    direction: 'top',
+                                    className: 'leaflet-tooltip-own tooltip-coordinate' 
+                                }).openTooltip();
+                            });
+
+                            marker.on('mouseout', function(e) {
+                                this.setStyle({ fillColor: 'white', radius: 4 });
+                            });
                         });
                     }
 
