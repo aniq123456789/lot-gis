@@ -63,6 +63,7 @@
             .info-value { font-size: 15px; color: #2c3e50; font-weight: 700; display: block; }
             .btn-pdf { background: #27ae60; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: 700; transition: 0.3s; }
 
+            /* --- TOOLTIP STYLE --- */
             .leaflet-tooltip-own {
                 background: rgba(26, 37, 47, 0.9);
                 border: 1px solid #e74c3c;
@@ -204,26 +205,6 @@
                 window.selectedLotData = { lot, owner, area };
             }
 
-            // --- FUNGSI REKURSIF UNTUK LUKIS BATU SEMPADAN ---
-            function drawBatuSempadan(coords) {
-                if (Array.isArray(coords[0])) {
-                    // Jika ada nesting (array dalam array), kita panggil balik fungsi ni
-                    coords.forEach(drawBatuSempadan);
-                } else {
-                    // Bila dah sampai tahap LatLng tunggal, baru kita lukis point
-                    L.circleMarker(coords, {
-                        radius: 4,         
-                        fillColor: "#ffff00", // Kuning supaya nampak atas satelit
-                        color: "#000000",     
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 1,
-                        interactive: false,
-                        pane: 'markerPane'    // Pastikan dia duduk atas poligon
-                    }).addTo(map);
-                }
-            }
-
             var lotLayer = L.geoJson(json_LOTFINAL_0, {
                 style: { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 },
                 onEachFeature: function(feature, layer) {
@@ -231,15 +212,32 @@
                         $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
                     }
 
-                    // PANGGIL FUNGSI LUKIS BATU SEMPADAN UNTUK SETIAP FEATURE
-                    if (layer.getLatLngs) {
-                        drawBatuSempadan(layer.getLatLngs());
+                    // --- TAMBAHAN: LUKIS BATU SEMPADAN (POINTS) PADA SETIAP BUCU ---
+                    if (feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')) {
+                        var coords = layer.getLatLngs();
+                        // Flatten array untuk handle Polygon (level 2) & MultiPolygon (level 3)
+                        var vertices = feature.geometry.type === 'MultiPolygon' ? coords.flat(2) : coords[0];
+
+                        vertices.forEach(function(latlng) {
+                            L.circleMarker(latlng, {
+                                radius: 3,         
+                                fillColor: "white", 
+                                color: "#000",     
+                                weight: 1,
+                                opacity: 1,
+                                fillOpacity: 1,
+                                interactive: false 
+                            }).addTo(map);
+                        });
                     }
 
+                    // FUNGSI MOUSEOVER (APABILA ARROW MELALUI LOT)
                     layer.on('mouseover', function(e) {
                         var layer = e.target;
                         layer.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
+                        
                         updateDisplay(layer.feature.properties);
+
                         var content = `
                             <div style="font-size:12px;">
                                 <b>LOT: ${layer.feature.properties['NO LOT']}</b><br>
@@ -250,12 +248,14 @@
                         layer.bindTooltip(content, { sticky: true, className: 'leaflet-tooltip-own' }).openTooltip();
                     });
 
+                    // FUNGSI MOUSEOUT (APABILA ARROW KELUAR DARI LOT)
                     layer.on('mouseout', function(e) {
                         if (highlightLayer !== e.target) {
                             lotLayer.resetStyle(e.target);
                         }
                     });
 
+                    // FUNGSI KLIK (UNTUK LOCK SELECTION)
                     layer.on('click', function(e) {
                         if (highlightLayer) { lotLayer.resetStyle(highlightLayer); }
                         highlightLayer = e.target;
@@ -281,6 +281,7 @@
 
             $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
 
+            // --- PDF GENERATION ---
             async function generateFinalPDF() {
                 if(window.selectedLotData.lot === "-") { alert("Sila pilih satu lot."); return; }
                 const overlay = document.getElementById('loading-overlay');
