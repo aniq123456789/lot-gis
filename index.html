@@ -17,6 +17,7 @@
         <style>
             body, html { height: 100%; margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
             
+            /* --- LOGIN STYLING --- */
             #login-overlay {
                 position: fixed; top: 0; left: 0; width: 100%; height: 100%;
                 background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
@@ -34,6 +35,7 @@
             .btn-login { background: #e74c3c; color: white; width: 100%; padding: 12px; border-radius: 8px; font-weight: 700; border: none; transition: 0.3s; }
             .btn-login:hover { background: #c0392b; transform: translateY(-2px); }
 
+            /* --- MAIN INTERFACE STYLING --- */
             header {
                 position: relative; height: 130px; width: 100%; overflow: hidden;
                 display: flex; align-items: center; justify-content: center; color: white;
@@ -56,25 +58,32 @@
             #sidebarCollapse { position: absolute; top: 15px; left: 15px; z-index: 1000; background: #1a252f; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; }
             .card-menu { background: #fff; border-radius: 12px; padding: 15px; margin: 15px; border: 1px solid #eee; }
             .card-menu h6 { font-weight: 700; color: #1a252f; margin-bottom: 12px; border-bottom: 2px solid #e74c3c; padding-bottom: 8px; }
-            .info-box { background: #f8f9fa; padding: 10px; border-radius: 8px; border-left: 5px solid #e74c3c; margin-bottom: 10px; }
+            .info-box { background: #f8f9fa; padding: 10px; border-radius: 8px; border-left: 5px solid #e74c3c; margin-bottom: 10px; transition: 0.3s; }
             .info-label { font-size: 10px; text-transform: uppercase; color: #95a5a6; font-weight: 800; display: block; }
             .info-value { font-size: 15px; color: #2c3e50; font-weight: 700; display: block; }
-            .btn-pdf { background: #27ae60; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: 700; }
+            .btn-pdf { background: #27ae60; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: 700; transition: 0.3s; }
 
-            /* TOOLTIP KOORDINAT */
-            .batu-tooltip {
-                background: #1a252f !important;
-                border: 2px solid #ffff00 !important;
-                color: #ffffff !important;
-                font-weight: bold !important;
-                border-radius: 5px !important;
-                padding: 5px !important;
-                font-size: 11px !important;
+            .leaflet-tooltip-own {
+                background: rgba(26, 37, 47, 0.9);
+                border: 1px solid #e74c3c;
+                border-radius: 5px;
+                color: white;
+                padding: 10px;
+                font-family: 'Poppins', sans-serif;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.3);
             }
 
             #loading-overlay {
                 display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); 
                 z-index: 9999; color:white; text-align:center; padding-top:20%;
+            }
+
+            @keyframes shake {
+                0% { transform: translateX(0); }
+                25% { transform: translateX(-10px); }
+                50% { transform: translateX(10px); }
+                75% { transform: translateX(-10px); }
+                100% { transform: translateX(0); }
             }
         </style>
     </head>
@@ -91,12 +100,16 @@
                 <input type="text" id="username" class="form-control" placeholder="ID Pengguna">
                 <input type="password" id="password" class="form-control" placeholder="Kata Laluan">
                 <button class="btn-login" onclick="checkLogin()">MASUK SISTEM</button>
+                <div id="login-error" class="text-danger mt-3" style="display:none; font-size: 13px;">
+                    ID Pengguna atau Kata Laluan Salah!
+                </div>
             </div>
         </div>
 
         <div id="loading-overlay">
             <div class="spinner-border text-light mb-3"></div>
             <h3>Menjana Laporan PDF...</h3>
+            <p>Sila tunggu, sistem sedang merakam kedudukan satelit lot.</p>
         </div>
 
         <img id="logoPuoRef" src="image_247e7c.png" style="display:none;">
@@ -119,7 +132,7 @@
         <div id="wrapper">
             <nav id="sidebar">
                 <div class="card-menu">
-                    <h6>Butiran Lot</h6>
+                    <h6>Butiran Lot (Hover/Klik)</h6>
                     <div id="lotDataDisplay">
                         <div class="info-box">
                             <span class="info-label">Nombor Lot</span>
@@ -157,16 +170,23 @@
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
         <script>
+            // --- LOGIN ---
             function checkLogin() {
                 const user = document.getElementById('username').value;
                 const pass = document.getElementById('password').value;
                 if (user === "1" && pass === "admin") {
                     document.getElementById('login-overlay').style.display = 'none';
                     map.invalidateSize();
+                } else {
+                    document.getElementById('login-error').style.display = 'block';
+                    const card = document.querySelector('.login-card');
+                    card.style.animation = "shake 0.5s";
+                    setTimeout(() => card.style.animation = "", 500);
                 }
             }
 
-            var map = L.map('map', { zoomControl: false, attributionControl: false }).setView([2.10385, 102.5214], 19);
+            // --- MAP LOGIC ---
+            var map = L.map('map', { zoomControl: false, attributionControl: false, preferCanvas: true }).setView([2.10385, 102.5214], 19);
             L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22, crossOrigin: 'anonymous' }).addTo(map);
 
             var highlightLayer;
@@ -176,39 +196,34 @@
                 const lot = props['NO LOT'] || "-";
                 const owner = props['tsp — pe'] || props['Pemilik'] || "Jabatan Geomatik (PUO)";
                 const area = props['AREA'] ? parseFloat(props['AREA']).toFixed(3) + " m²" : "-";
+
                 document.getElementById('res-no-lot').innerText = lot;
                 document.getElementById('res-owner').innerText = owner;
                 document.getElementById('res-luas').innerText = area;
+
                 window.selectedLotData = { lot, owner, area };
             }
 
-            // FUNGSI LUKIS BATU (VERSI STABLE)
-            function addBatuSempadan(latlng) {
-                var lat = latlng.lat;
-                var lng = latlng.lng;
-                
-                var marker = L.circleMarker(latlng, {
-                    radius: 10, // BESAR SIKIT LAGI MACAM KAU NAK
-                    fillColor: "#ffff00",
-                    color: "#000000",
-                    weight: 2,
-                    fillOpacity: 1,
-                    pane: 'markerPane'
-                }).addTo(map);
-
-                marker.bindTooltip(`
-                    <div style="text-align:center;">
-                        <b>BATU SEMPADAN</b><br>
-                        Latit: ${lat.toFixed(7)}<br>
-                        Dipat: ${lng.toFixed(7)}
-                    </div>`, {
-                    sticky: true,
-                    className: 'batu-tooltip',
-                    offset: [0, -5]
-                });
+            // --- FUNGSI REKURSIF UNTUK LUKIS BATU SEMPADAN ---
+            function drawBatuSempadan(coords) {
+                if (Array.isArray(coords[0])) {
+                    // Jika ada nesting (array dalam array), kita panggil balik fungsi ni
+                    coords.forEach(drawBatuSempadan);
+                } else {
+                    // Bila dah sampai tahap LatLng tunggal, baru kita lukis point
+                    L.circleMarker(coords, {
+                        radius: 4,         
+                        fillColor: "#ffff00", // Kuning supaya nampak atas satelit
+                        color: "#000000",     
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 1,
+                        interactive: false,
+                        pane: 'markerPane'    // Pastikan dia duduk atas poligon
+                    }).addTo(map);
+                }
             }
 
-            // LOAD DATA ASAL
             var lotLayer = L.geoJson(json_LOTFINAL_0, {
                 style: { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 },
                 onEachFeature: function(feature, layer) {
@@ -216,28 +231,29 @@
                         $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
                     }
 
-                    // Logik Lukis Batu Sempadan Tanpa Crash
+                    // PANGGIL FUNGSI LUKIS BATU SEMPADAN UNTUK SETIAP FEATURE
                     if (layer.getLatLngs) {
-                        var shape = layer.getLatLngs();
-                        // Iterasi koordinat mengikut struktur Leaflet (Polygon/MultiPolygon)
-                        shape.forEach(function(part) {
-                            if (Array.isArray(part[0])) { 
-                                part.forEach(function(ring) { 
-                                    ring.forEach(function(coord) { addBatuSempadan(coord); }); 
-                                });
-                            } else {
-                                part.forEach(function(coord) { addBatuSempadan(coord); });
-                            }
-                        });
+                        drawBatuSempadan(layer.getLatLngs());
                     }
 
                     layer.on('mouseover', function(e) {
-                        e.target.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
-                        updateDisplay(e.target.feature.properties);
+                        var layer = e.target;
+                        layer.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
+                        updateDisplay(layer.feature.properties);
+                        var content = `
+                            <div style="font-size:12px;">
+                                <b>LOT: ${layer.feature.properties['NO LOT']}</b><br>
+                                Pemilik: ${layer.feature.properties['Pemilik'] || "PUO"}<br>
+                                Luas: ${parseFloat(layer.feature.properties['AREA']).toFixed(2)} m²
+                            </div>
+                        `;
+                        layer.bindTooltip(content, { sticky: true, className: 'leaflet-tooltip-own' }).openTooltip();
                     });
 
                     layer.on('mouseout', function(e) {
-                        if (highlightLayer !== e.target) { lotLayer.resetStyle(e.target); }
+                        if (highlightLayer !== e.target) {
+                            lotLayer.resetStyle(e.target);
+                        }
                     });
 
                     layer.on('click', function(e) {
@@ -267,15 +283,53 @@
 
             async function generateFinalPDF() {
                 if(window.selectedLotData.lot === "-") { alert("Sila pilih satu lot."); return; }
-                document.getElementById('loading-overlay').style.display = "block";
+                const overlay = document.getElementById('loading-overlay');
+                overlay.style.display = "block";
+
+                let tempMarker;
+                if(highlightLayer) {
+                    map.fitBounds(highlightLayer.getBounds(), { padding: [140, 140], animate: false });
+                    var center = highlightLayer.getBounds().getCenter();
+                    tempMarker = L.marker(center, {
+                        icon: L.divIcon({ className: 'map-label-focused', html: `<div style="background:rgba(26,37,47,0.8); color:white; padding:2px 5px; border:1px solid red; border-radius:3px; font-weight:bold; font-size:10px;">LOT ${window.selectedLotData.lot}</div>`, iconSize: [80, 30] })
+                    }).addTo(map);
+                }
+
+                await new Promise(r => setTimeout(r, 1500));
+
                 try {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF('l', 'mm', 'a3'); 
-                    const canvas = await html2canvas(document.getElementById('map'), { useCORS: true, scale: 2 });
-                    doc.addImage(canvas.toDataURL('image/png'), 'PNG', 97, 14, 308, 269);
+                    const canvas = await html2canvas(document.getElementById('map'), { useCORS: true, scale: 3 });
+                    const imgData = canvas.toDataURL('image/png');
+
+                    doc.setDrawColor(30); doc.rect(10, 10, 400, 277); doc.line(95, 10, 95, 287); 
+
+                    try {
+                        doc.addImage(document.getElementById("logoPoliRef"), 'PNG', 20, 20, 25, 25);
+                        doc.addImage(document.getElementById("logoPuoRef"), 'PNG', 65, 20, 22, 25);
+                    } catch(e) {}
+
+                    doc.setFont("times", "bold"); doc.setFontSize(16);
+                    doc.text("LAPORAN RASMI", 52.5, 55, {align: "center"});
+                    doc.text("LOT TANAH DIGITAL", 52.5, 62, {align: "center"});
+                    doc.setFontSize(10); doc.text("Jabatan Geomatik, PUO", 52.5, 70, {align: "center"});
+                    doc.line(20, 75, 85, 75);
+
+                    let startY = 95;
+                    const data = [["NOMBOR LOT", window.selectedLotData.lot], ["PEMILIK", window.selectedLotData.owner.toUpperCase()], ["KELUASAN", window.selectedLotData.area], ["TARIKH", new Date().toLocaleDateString('ms-MY')]];
+                    data.forEach(row => {
+                        doc.setFillColor(248, 249, 250); doc.rect(18, startY, 70, 20, 'F');
+                        doc.setFontSize(8); doc.setTextColor(120); doc.text(row[0], 22, startY + 6);
+                        doc.setFontSize(11); doc.setTextColor(0); doc.text(doc.splitTextToSize(row[1], 65), 22, startY + 13);
+                        startY += 28;
+                    });
+
+                    doc.addImage(imgData, 'PNG', 97, 14, 308, 269);
+                    doc.setFontSize(8); doc.text("Sistem Cempaka Digital Resident © 2026", 52.5, 275, {align: "center"});
                     doc.save(`Laporan_Lot_${window.selectedLotData.lot}.pdf`);
-                } catch (err) { alert("Ralat PDF."); }
-                finally { document.getElementById('loading-overlay').style.display = "none"; }
+                } catch (err) { alert("Ralat menjana laporan."); }
+                finally { if(tempMarker) map.removeLayer(tempMarker); overlay.style.display = "none"; }
             }
         </script>
     </body>
