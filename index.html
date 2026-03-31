@@ -212,15 +212,32 @@
                         $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
                     }
 
+                    // --- TAMBAHAN: LUKIS BATU SEMPADAN (POINTS) PADA SETIAP BUCU ---
+                    if (feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')) {
+                        var coords = layer.getLatLngs();
+                        // Flatten array untuk handle Polygon (level 2) & MultiPolygon (level 3)
+                        var vertices = feature.geometry.type === 'MultiPolygon' ? coords.flat(2) : coords[0];
+
+                        vertices.forEach(function(latlng) {
+                            L.circleMarker(latlng, {
+                                radius: 3,         
+                                fillColor: "white", 
+                                color: "#000",     
+                                weight: 1,
+                                opacity: 1,
+                                fillOpacity: 1,
+                                interactive: false 
+                            }).addTo(map);
+                        });
+                    }
+
                     // FUNGSI MOUSEOVER (APABILA ARROW MELALUI LOT)
                     layer.on('mouseover', function(e) {
                         var layer = e.target;
                         layer.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
                         
-                        // Papar maklumat di sidebar secara automatik
                         updateDisplay(layer.feature.properties);
 
-                        // Popup terapung (Tooltip)
                         var content = `
                             <div style="font-size:12px;">
                                 <b>LOT: ${layer.feature.properties['NO LOT']}</b><br>
@@ -275,7 +292,7 @@
                     map.fitBounds(highlightLayer.getBounds(), { padding: [140, 140], animate: false });
                     var center = highlightLayer.getBounds().getCenter();
                     tempMarker = L.marker(center, {
-                        icon: L.divIcon({ className: 'map-label-focused', html: `LOT ${window.selectedLotData.lot}`, iconSize: [80, 30] })
+                        icon: L.divIcon({ className: 'map-label-focused', html: `<div style="background:rgba(26,37,47,0.8); color:white; padding:2px 5px; border:1px solid red; border-radius:3px; font-weight:bold; font-size:10px;">LOT ${window.selectedLotData.lot}</div>`, iconSize: [80, 30] })
                     }).addTo(map);
                 }
 
