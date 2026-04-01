@@ -93,6 +93,16 @@
                 75% { transform: translateX(-10px); }
                 100% { transform: translateX(0); }
             }
+
+            /* Custom styling untuk Leaflet Layer Control supaya selari dengan tema */
+            .leaflet-control-layers {
+                font-family: 'Poppins', sans-serif;
+                font-size: 13px;
+                font-weight: 600;
+                border-radius: 8px !important;
+                border: 2px solid #e74c3c !important;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+            }
         </style>
     </head>
     <body>
@@ -195,7 +205,7 @@
 
             // --- MAP LOGIC ---
             var map = L.map('map', { zoomControl: false, attributionControl: false, preferCanvas: true }).setView([2.10385, 102.5214], 19);
-            L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22, crossOrigin: 'anonymous' }).addTo(map);
+            var baseLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22, crossOrigin: 'anonymous' }).addTo(map);
 
             var highlightLayer;
             window.selectedLotData = { lot: "-", owner: "-", area: "-" };
@@ -212,6 +222,9 @@
                 window.selectedLotData = { lot, owner, area };
             }
 
+            // --- PENGASINGAN LAPISAN (LAYER GROUP) ---
+            var batuSempadanGroup = L.layerGroup().addTo(map); // Auto on pada permulaan
+            
             var lotLayer = L.geoJson(json_LOTFINAL_0, {
                 style: { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 },
                 onEachFeature: function(feature, layer) {
@@ -233,7 +246,10 @@
                                 opacity: 1,
                                 fillOpacity: 1,
                                 interactive: true 
-                            }).addTo(map);
+                            });
+
+                            // Masukkan marker batu sempadan ke dalam group
+                            marker.addTo(batuSempadanGroup);
 
                             marker.on('mouseover', function(e) {
                                 this.setStyle({ fillColor: '#27ae60', radius: 6 });
@@ -285,7 +301,16 @@
                         updateDisplay(e.target.feature.properties);
                     });
                 }
-            }).addTo(map);
+            }).addTo(map); // Auto on garisan lot pada permulaan
+
+            // --- MENAMBAH KAWALAN ON/OFF PADA PETA ---
+            var overlays = {
+                "Garisan Sempadan": lotLayer,
+                "Batu Sempadan": batuSempadanGroup
+            };
+            
+            // Letakkan di sudut kanan atas peta
+            L.control.layers(null, overlays, { collapsed: false, position: 'topright' }).addTo(map);
 
             $('#lotSearchSelector').change(function() {
                 var val = $(this).val();
