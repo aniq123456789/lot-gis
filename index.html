@@ -1,383 +1,213 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-        <title>Saujana Putra Smart Resident - PUO</title>
-        
-        <link rel="stylesheet" href="css/leaflet.css">
-        <link rel="stylesheet" href="css/fontawesome-all.min.css">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
-        
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    // --- LOGIN ---
+    function checkLogin() {
+        const user = document.getElementById('username').value;
+        const pass = document.getElementById('password').value;
+        if (user === "1" && pass === "admin") {
+            document.getElementById('login-overlay').style.display = 'none';
+            map.invalidateSize();
+        } else {
+            document.getElementById('login-error').style.display = 'block';
+            const card = document.querySelector('.login-card');
+            card.style.animation = "shake 0.5s";
+            setTimeout(() => card.style.animation = "", 500);
+        }
+    }
 
-        <style>
-            body, html { height: 100%; margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
-            
-            /* --- LOGIN STYLING --- */
-            #login-overlay {
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
-                z-index: 10000; display: flex; align-items: center; justify-content: center;
-            }
-            .login-card {
-                background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                width: 100%; max-width: 400px; text-align: center;
-            }
-            .login-logos { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
-            .login-logos img { height: 60px; width: auto; }
-            .login-card h2 { font-weight: 800; color: #1a252f; margin-bottom: 5px; }
-            .login-card p { color: #7f8c8d; font-size: 14px; margin-bottom: 25px; }
-            .form-control { border-radius: 8px; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; }
-            .btn-login { background: #e74c3c; color: white; width: 100%; padding: 12px; border-radius: 8px; font-weight: 700; border: none; transition: 0.3s; }
-            .btn-login:hover { background: #c0392b; transform: translateY(-2px); }
+    // --- MAP LOGIC ---
+    // Inisialisasi map tanpa menambah layer terus
+    var map = L.map('map', { 
+        zoomControl: false, 
+        attributionControl: false, 
+        preferCanvas: true 
+    }).setView([2.10385, 102.5214], 19);
 
-            /* --- MAIN INTERFACE STYLING --- */
-            header {
-                position: relative; height: 130px; width: 100%; overflow: hidden;
-                display: flex; align-items: center; justify-content: center; color: white;
-                border-bottom: 5px solid #e74c3c; z-index: 1000;
-            }
-            #header-video {
-                position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%;
-                width: auto; height: auto; transform: translate(-50%, -50%);
-                z-index: -1; filter: brightness(40%); object-fit: cover;
-            }
-            .header-content { display: flex; align-items: center; width: 96%; justify-content: space-between; z-index: 1; }
-            .logo-poli, .logo-puo { height: 80px; }
+    // --- DEFINISI BASE LAYERS (GOOGLE MAPS) ---
+    var googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { 
+        maxZoom: 22, 
+        crossOrigin: 'anonymous' 
+    }).addTo(map); // Set sebagai default
 
-            #wrapper { display: flex; width: 100%; height: calc(100vh - 130px); }
-            #sidebar { min-width: 340px; background: #ffffff; display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.1); z-index: 1050; transition: 0.3s; }
-            #sidebar.active { margin-left: -340px; }
-            #map-container { flex-grow: 1; position: relative; background: #eee; }
-            #map { width: 100%; height: 100%; cursor: crosshair; }
-            
-            #sidebarCollapse { position: absolute; top: 15px; left: 15px; z-index: 1000; background: #1a252f; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; }
-            .card-menu { background: #fff; border-radius: 12px; padding: 15px; margin: 15px; border: 1px solid #eee; }
-            .card-menu h6 { font-weight: 700; color: #1a252f; margin-bottom: 12px; border-bottom: 2px solid #e74c3c; padding-bottom: 8px; }
-            .info-box { background: #f8f9fa; padding: 10px; border-radius: 8px; border-left: 5px solid #e74c3c; margin-bottom: 10px; transition: 0.3s; }
-            .info-label { font-size: 10px; text-transform: uppercase; color: #95a5a6; font-weight: 800; display: block; }
-            .info-value { font-size: 15px; color: #2c3e50; font-weight: 700; display: block; }
-            .btn-pdf { background: #27ae60; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: 700; transition: 0.3s; }
+    var googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 22,
+        crossOrigin: 'anonymous'
+    });
 
-            /* --- TOOLTIP STYLE --- */
-            .leaflet-tooltip-own {
-                background: rgba(26, 37, 47, 0.9);
-                border: 1px solid #e74c3c;
-                border-radius: 5px;
-                color: white;
-                padding: 10px;
-                font-family: 'Poppins', sans-serif;
-                box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-            }
-            
-            .tooltip-coordinate {
-                background: #27ae60 !important;
-                border: 1px solid #fff !important;
-                font-weight: bold;
-                font-size: 11px;
+    var highlightLayer;
+    window.selectedLotData = { lot: "-", owner: "-", area: "-" };
+
+    function updateDisplay(props) {
+        const lot = props['NO LOT'] || "-";
+        const owner = props['tsp — pe'] || props['Pemilik'] || "Jabatan Geomatik (PUO)";
+        const area = props['AREA'] ? parseFloat(props['AREA']).toFixed(3) + " m²" : "-";
+
+        document.getElementById('res-no-lot').innerText = lot;
+        document.getElementById('res-owner').innerText = owner;
+        document.getElementById('res-luas').innerText = area;
+
+        window.selectedLotData = { lot, owner, area };
+    }
+
+    // --- LAYER GROUP UNTUK OVERLAYS ---
+    var batuSempadanGroup = L.layerGroup().addTo(map);
+    
+    var lotLayer = L.geoJson(json_LOTFINAL_0, {
+        style: { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 },
+        onEachFeature: function(feature, layer) {
+            if (feature.properties['NO LOT']) {
+                $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
             }
 
-            #loading-overlay {
-                display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); 
-                z-index: 9999; color:white; text-align:center; padding-top:20%;
-            }
+            if (feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')) {
+                var coords = layer.getLatLngs();
+                var vertices = feature.geometry.type === 'MultiPolygon' ? coords.flat(2) : coords[0];
 
-            @keyframes shake {
-                0% { transform: translateX(0); }
-                25% { transform: translateX(-10px); }
-                50% { transform: translateX(10px); }
-                75% { transform: translateX(-10px); }
-                100% { transform: translateX(0); }
-            }
+                vertices.forEach(function(latlng) {
+                    var marker = L.circleMarker(latlng, {
+                        radius: 4,      
+                        fillColor: "white", 
+                        color: "#000",      
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 1,
+                        interactive: true 
+                    });
 
-            /* Custom styling untuk Leaflet Layer Control supaya selari dengan tema */
-            .leaflet-control-layers {
-                font-family: 'Poppins', sans-serif;
-                font-size: 13px;
-                font-weight: 600;
-                border-radius: 8px !important;
-                border: 2px solid #e74c3c !important;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-            }
-        </style>
-    </head>
-    <body>
+                    marker.addTo(batuSempadanGroup);
 
-        <div id="login-overlay">
-            <div class="login-card">
-                <div class="login-logos">
-                    <img src="Poli_Logo.png" alt="Logo Politeknik">
-                    <img src="image_247e7c.png" alt="Logo PUO">
-                </div>
-                <h2>Log Masuk</h2>
-                <p>Sistem Maklumat Lot Saujana Putra</p>
-                <input type="text" id="username" class="form-control" placeholder="ID Pengguna">
-                <input type="password" id="password" class="form-control" placeholder="Kata Laluan">
-                <button class="btn-login" onclick="checkLogin()">MASUK SISTEM</button>
-                <div id="login-error" class="text-danger mt-3" style="display:none; font-size: 13px;">
-                    ID Pengguna atau Kata Laluan Salah!
-                </div>
-            </div>
-        </div>
-
-        <div id="loading-overlay">
-            <div class="spinner-border text-light mb-3"></div>
-            <h3>Menjana Laporan PDF...</h3>
-            <p>Sila tunggu, sistem sedang merakam kedudukan satelit lot.</p>
-        </div>
-
-        <img id="logoPuoRef" src="image_247e7c.png" style="display:none;">
-        <img id="logoPoliRef" src="Poli_Logo.png" style="display:none;">
-
-        <header>
-            <video autoplay muted loop playsinline id="header-video">
-                <source src="video1.mp4" type="video/mp4">
-            </video>
-            <div class="header-content">
-                <img src="Poli_Logo.png" class="logo-poli">
-                <div class="text-center">
-                    <h1 class="m-0 fw-bold">Saujana Putra Smart Resident</h1>
-                    <p class="m-0 text-warning">Sistem Maklumat Lot Tanah Terdigital (Jabatan Geomatik)</p>
-                </div>
-                <img src="image_247e7c.png" class="logo-puo">
-            </div>
-        </header>
-
-        <div id="wrapper">
-            <nav id="sidebar">
-                <div class="card-menu">
-                    <h6>Butiran Lot (Hover/Klik)</h6>
-                    <div id="lotDataDisplay">
-                        <div class="info-box">
-                            <span class="info-label">Nombor Lot</span>
-                            <span id="res-no-lot" class="info-value">-</span>
-                        </div>
-                        <div class="info-box">
-                            <span class="info-label">Keluasan</span>
-                            <span id="res-luas" class="info-value">-</span>
-                        </div>
-                        <div class="info-box">
-                            <span class="info-label">Pemilik</span>
-                            <span id="res-owner" class="info-value">-</span>
-                        </div>
-                        <button class="btn btn-pdf" onclick="generateFinalPDF()">
-                            <i class="fas fa-file-download"></i> MUAT TURUN LAPORAN PDF
-                        </button>
-                    </div>
-                </div>
-                <div class="card-menu">
-                    <h6>Carian Lot</h6>
-                    <select id="lotSearchSelector" class="form-select">
-                        <option value="">-- Pilih Nombor Lot --</option>
-                    </select>
-                </div>
-            </nav>
-
-            <div id="map-container">
-                <button id="sidebarCollapse"><i class="fas fa-bars"></i></button>
-                <div id="map"></div>
-            </div>
-        </div>
-
-        <script src="js/leaflet.js"></script>
-        <script src="data/LOTFINAL_0.js"></script>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-        <script>
-            // --- LOGIN ---
-            function checkLogin() {
-                const user = document.getElementById('username').value;
-                const pass = document.getElementById('password').value;
-                if (user === "1" && pass === "admin") {
-                    document.getElementById('login-overlay').style.display = 'none';
-                    map.invalidateSize();
-                } else {
-                    document.getElementById('login-error').style.display = 'block';
-                    const card = document.querySelector('.login-card');
-                    card.style.animation = "shake 0.5s";
-                    setTimeout(() => card.style.animation = "", 500);
-                }
-            }
-
-            // --- MAP LOGIC ---
-            var map = L.map('map', { zoomControl: false, attributionControl: false, preferCanvas: true }).setView([2.10385, 102.5214], 19);
-            var baseLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22, crossOrigin: 'anonymous' }).addTo(map);
-
-            var highlightLayer;
-            window.selectedLotData = { lot: "-", owner: "-", area: "-" };
-
-            function updateDisplay(props) {
-                const lot = props['NO LOT'] || "-";
-                const owner = props['tsp — pe'] || props['Pemilik'] || "Jabatan Geomatik (PUO)";
-                const area = props['AREA'] ? parseFloat(props['AREA']).toFixed(3) + " m²" : "-";
-
-                document.getElementById('res-no-lot').innerText = lot;
-                document.getElementById('res-owner').innerText = owner;
-                document.getElementById('res-luas').innerText = area;
-
-                window.selectedLotData = { lot, owner, area };
-            }
-
-            // --- PENGASINGAN LAPISAN (LAYER GROUP) ---
-            var batuSempadanGroup = L.layerGroup().addTo(map); // Auto on pada permulaan
-            
-            var lotLayer = L.geoJson(json_LOTFINAL_0, {
-                style: { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 },
-                onEachFeature: function(feature, layer) {
-                    if (feature.properties['NO LOT']) {
-                        $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
-                    }
-
-                    // --- TAMBAHAN: LUKIS BATU SEMPADAN (POINTS) PADA SETIAP BUCU ---
-                    if (feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')) {
-                        var coords = layer.getLatLngs();
-                        var vertices = feature.geometry.type === 'MultiPolygon' ? coords.flat(2) : coords[0];
-
-                        vertices.forEach(function(latlng) {
-                            var marker = L.circleMarker(latlng, {
-                                radius: 4,          
-                                fillColor: "white", 
-                                color: "#000",      
-                                weight: 1,
-                                opacity: 1,
-                                fillOpacity: 1,
-                                interactive: true 
-                            });
-
-                            // Masukkan marker batu sempadan ke dalam group
-                            marker.addTo(batuSempadanGroup);
-
-                            marker.on('mouseover', function(e) {
-                                this.setStyle({ fillColor: '#27ae60', radius: 6 });
-                                var coordContent = `
-                                    <div style="text-align:center;">
-                                        <b style="color:#f1c40f;">BATU SEMPADAN</b><br>
-                                        Lat: ${latlng.lat.toFixed(7)}<br>
-                                        Lng: ${latlng.lng.toFixed(7)}
-                                    </div>
-                                `;
-                                this.bindTooltip(coordContent, { 
-                                    sticky: true, 
-                                    direction: 'top',
-                                    className: 'leaflet-tooltip-own tooltip-coordinate' 
-                                }).openTooltip();
-                            });
-
-                            marker.on('mouseout', function(e) {
-                                this.setStyle({ fillColor: 'white', radius: 4 });
-                            });
-                        });
-                    }
-
-                    layer.on('mouseover', function(e) {
-                        var layer = e.target;
-                        layer.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
-                        updateDisplay(layer.feature.properties);
-                        var content = `
-                            <div style="font-size:12px;">
-                                <b>LOT: ${layer.feature.properties['NO LOT']}</b><br>
-                                Pemilik: ${layer.feature.properties['Pemilik'] || "PUO"}<br>
-                                Luas: ${parseFloat(layer.feature.properties['AREA']).toFixed(2)} m²
+                    marker.on('mouseover', function(e) {
+                        this.setStyle({ fillColor: '#27ae60', radius: 6 });
+                        var coordContent = `
+                            <div style="text-align:center;">
+                                <b style="color:#f1c40f;">BATU SEMPADAN</b><br>
+                                Lat: ${latlng.lat.toFixed(7)}<br>
+                                Lng: ${latlng.lng.toFixed(7)}
                             </div>
                         `;
-                        layer.bindTooltip(content, { sticky: true, className: 'leaflet-tooltip-own' }).openTooltip();
+                        this.bindTooltip(coordContent, { 
+                            sticky: true, 
+                            direction: 'top',
+                            className: 'leaflet-tooltip-own tooltip-coordinate' 
+                        }).openTooltip();
                     });
 
-                    layer.on('mouseout', function(e) {
-                        if (highlightLayer !== e.target) {
-                            lotLayer.resetStyle(e.target);
-                        }
+                    marker.on('mouseout', function(e) {
+                        this.setStyle({ fillColor: 'white', radius: 4 });
                     });
-
-                    layer.on('click', function(e) {
-                        if (highlightLayer) { lotLayer.resetStyle(highlightLayer); }
-                        highlightLayer = e.target;
-                        highlightLayer.setStyle({ weight: 5, color: '#ffff00', fillOpacity: 0.4 });
-                        map.flyToBounds(e.target.getBounds(), { padding: [100, 100] });
-                        updateDisplay(e.target.feature.properties);
-                    });
-                }
-            }).addTo(map); // Auto on garisan lot pada permulaan
-
-            // --- MENAMBAH KAWALAN ON/OFF PADA PETA ---
-            var overlays = {
-                "Garisan Sempadan": lotLayer,
-                "Batu Sempadan": batuSempadanGroup
-            };
-            
-            // Letakkan di sudut kanan atas peta
-            L.control.layers(null, overlays, { collapsed: false, position: 'topright' }).addTo(map);
-
-            $('#lotSearchSelector').change(function() {
-                var val = $(this).val();
-                lotLayer.eachLayer(layer => {
-                    if (layer.feature.properties['NO LOT'] == val) {
-                        if (highlightLayer) { lotLayer.resetStyle(highlightLayer); }
-                        highlightLayer = layer;
-                        highlightLayer.setStyle({ weight: 5, color: '#ffff00', fillOpacity: 0.4 });
-                        map.flyToBounds(layer.getBounds(), { padding: [100, 100] });
-                        updateDisplay(layer.feature.properties);
-                    }
                 });
+            }
+
+            layer.on('mouseover', function(e) {
+                var layer = e.target;
+                layer.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
+                updateDisplay(layer.feature.properties);
+                var content = `
+                    <div style="font-size:12px;">
+                        <b>LOT: ${layer.feature.properties['NO LOT']}</b><br>
+                        Pemilik: ${layer.feature.properties['Pemilik'] || "PUO"}<br>
+                        Luas: ${parseFloat(layer.feature.properties['AREA']).toFixed(2)} m²
+                    </div>
+                `;
+                layer.bindTooltip(content, { sticky: true, className: 'leaflet-tooltip-own' }).openTooltip();
             });
 
-            $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
-
-            // --- PDF GENERATION ---
-            async function generateFinalPDF() {
-                if(window.selectedLotData.lot === "-") { alert("Sila pilih satu lot."); return; }
-                const overlay = document.getElementById('loading-overlay');
-                overlay.style.display = "block";
-
-                let tempMarker;
-                if(highlightLayer) {
-                    map.fitBounds(highlightLayer.getBounds(), { padding: [140, 140], animate: false });
-                    var center = highlightLayer.getBounds().getCenter();
-                    tempMarker = L.marker(center, {
-                        icon: L.divIcon({ className: 'map-label-focused', html: `<div style="background:rgba(26,37,47,0.8); color:white; padding:2px 5px; border:1px solid red; border-radius:3px; font-weight:bold; font-size:10px;">LOT ${window.selectedLotData.lot}</div>`, iconSize: [80, 30] })
-                    }).addTo(map);
+            layer.on('mouseout', function(e) {
+                if (highlightLayer !== e.target) {
+                    lotLayer.resetStyle(e.target);
                 }
+            });
 
-                await new Promise(r => setTimeout(r, 1500));
+            layer.on('click', function(e) {
+                if (highlightLayer) { lotLayer.resetStyle(highlightLayer); }
+                highlightLayer = e.target;
+                highlightLayer.setStyle({ weight: 5, color: '#ffff00', fillOpacity: 0.4 });
+                map.flyToBounds(e.target.getBounds(), { padding: [100, 100] });
+                updateDisplay(e.target.feature.properties);
+            });
+        }
+    }).addTo(map);
 
-                try {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF('l', 'mm', 'a3'); 
-                    const canvas = await html2canvas(document.getElementById('map'), { useCORS: true, scale: 3 });
-                    const imgData = canvas.toDataURL('image/png');
+    // --- KAWALAN ON/OFF (BASE LAYERS & OVERLAYS) ---
+    var baseMaps = {
+        "Google Satellite": googleSatellite,
+        "Google Streets": googleStreets
+    };
 
-                    doc.setDrawColor(30); doc.rect(10, 10, 400, 277); doc.line(95, 10, 95, 287); 
+    var overlays = {
+        "Garisan Sempadan": lotLayer,
+        "Batu Sempadan": batuSempadanGroup
+    };
+    
+    // Menambah kawalan ke peta
+    L.control.layers(baseMaps, overlays, { 
+        collapsed: false, 
+        position: 'topright' 
+    }).addTo(map);
 
-                    try {
-                        doc.addImage(document.getElementById("logoPoliRef"), 'PNG', 20, 20, 25, 25);
-                        doc.addImage(document.getElementById("logoPuoRef"), 'PNG', 65, 20, 22, 25);
-                    } catch(e) {}
-
-                    doc.setFont("times", "bold"); doc.setFontSize(16);
-                    doc.text("LAPORAN RASMI", 52.5, 55, {align: "center"});
-                    doc.text("LOT TANAH DIGITAL", 52.5, 62, {align: "center"});
-                    doc.setFontSize(10); doc.text("Jabatan Geomatik, PUO", 52.5, 70, {align: "center"});
-                    doc.line(20, 75, 85, 75);
-
-                    let startY = 95;
-                    const data = [["NOMBOR LOT", window.selectedLotData.lot], ["PEMILIK", window.selectedLotData.owner.toUpperCase()], ["KELUASAN", window.selectedLotData.area], ["TARIKH", new Date().toLocaleDateString('ms-MY')]];
-                    data.forEach(row => {
-                        doc.setFillColor(248, 249, 250); doc.rect(18, startY, 70, 20, 'F');
-                        doc.setFontSize(8); doc.setTextColor(120); doc.text(row[0], 22, startY + 6);
-                        doc.setFontSize(11); doc.setTextColor(0); doc.text(doc.splitTextToSize(row[1], 65), 22, startY + 13);
-                        startY += 28;
-                    });
-
-                    doc.addImage(imgData, 'PNG', 97, 14, 308, 269);
-                    doc.setFontSize(8); doc.text("Sistem Saujana Putra Smart Resident © 2026", 52.5, 275, {align: "center"});
-                    doc.save(`Laporan_Lot_${window.selectedLotData.lot}.pdf`);
-                } catch (err) { alert("Ralat menjana laporan."); }
-                finally { if(tempMarker) map.removeLayer(tempMarker); overlay.style.display = "none"; }
+    $('#lotSearchSelector').change(function() {
+        var val = $(this).val();
+        lotLayer.eachLayer(layer => {
+            if (layer.feature.properties['NO LOT'] == val) {
+                if (highlightLayer) { lotLayer.resetStyle(highlightLayer); }
+                highlightLayer = layer;
+                highlightLayer.setStyle({ weight: 5, color: '#ffff00', fillOpacity: 0.4 });
+                map.flyToBounds(layer.getBounds(), { padding: [100, 100] });
+                updateDisplay(layer.feature.properties);
             }
-        </script>
-    </body>
-</html>
+        });
+    });
+
+    $('#sidebarCollapse').click(function() { $('#sidebar').toggleClass('active'); });
+
+    // --- PDF GENERATION ---
+    async function generateFinalPDF() {
+        if(window.selectedLotData.lot === "-") { alert("Sila pilih satu lot."); return; }
+        const overlay = document.getElementById('loading-overlay');
+        overlay.style.display = "block";
+
+        let tempMarker;
+        if(highlightLayer) {
+            map.fitBounds(highlightLayer.getBounds(), { padding: [140, 140], animate: false });
+            var center = highlightLayer.getBounds().getCenter();
+            tempMarker = L.marker(center, {
+                icon: L.divIcon({ className: 'map-label-focused', html: `<div style="background:rgba(26,37,47,0.8); color:white; padding:2px 5px; border:1px solid red; border-radius:3px; font-weight:bold; font-size:10px;">LOT ${window.selectedLotData.lot}</div>`, iconSize: [80, 30] })
+            }).addTo(map);
+        }
+
+        await new Promise(r => setTimeout(r, 1500));
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a3'); 
+            const canvas = await html2canvas(document.getElementById('map'), { useCORS: true, scale: 3 });
+            const imgData = canvas.toDataURL('image/png');
+
+            doc.setDrawColor(30); doc.rect(10, 10, 400, 277); doc.line(95, 10, 95, 287); 
+
+            try {
+                doc.addImage(document.getElementById("logoPoliRef"), 'PNG', 20, 20, 25, 25);
+                doc.addImage(document.getElementById("logoPuoRef"), 'PNG', 65, 20, 22, 25);
+            } catch(e) {}
+
+            doc.setFont("times", "bold"); doc.setFontSize(16);
+            doc.text("LAPORAN RASMI", 52.5, 55, {align: "center"});
+            doc.text("LOT TANAH DIGITAL", 52.5, 62, {align: "center"});
+            doc.setFontSize(10); doc.text("Jabatan Geomatik, PUO", 52.5, 70, {align: "center"});
+            doc.line(20, 75, 85, 75);
+
+            let startY = 95;
+            const data = [["NOMBOR LOT", window.selectedLotData.lot], ["PEMILIK", window.selectedLotData.owner.toUpperCase()], ["KELUASAN", window.selectedLotData.area], ["TARIKH", new Date().toLocaleDateString('ms-MY')]];
+            data.forEach(row => {
+                doc.setFillColor(248, 249, 250); doc.rect(18, startY, 70, 20, 'F');
+                doc.setFontSize(8); doc.setTextColor(120); doc.text(row[0], 22, startY + 6);
+                doc.setFontSize(11); doc.setTextColor(0); doc.text(doc.splitTextToSize(row[1], 65), 22, startY + 13);
+                startY += 28;
+            });
+
+            doc.addImage(imgData, 'PNG', 97, 14, 308, 269);
+            doc.setFontSize(8); doc.text("Sistem Saujana Putra Smart Resident © 2026", 52.5, 275, {align: "center"});
+            doc.save(`Laporan_Lot_${window.selectedLotData.lot}.pdf`);
+        } catch (err) { alert("Ralat menjana laporan."); }
+        finally { if(tempMarker) map.removeLayer(tempMarker); overlay.style.display = "none"; }
+    }
+</script>
