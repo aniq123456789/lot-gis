@@ -81,7 +81,6 @@
                 font-size: 11px;
             }
 
-            /* OPTIMASI: Tambah pointer-events none untuk elak lag pada label */
             .polygon-label {
                 background: none !important;
                 border: none !important;
@@ -141,7 +140,7 @@
         <div id="loading-overlay">
             <div class="spinner-border text-light mb-3"></div>
             <h3>Menjana Laporan PDF...</h3>
-            <p>Sila tunggu, sistem sedang merakam kedudukan satelit lot.</p>
+            <p>Sila tunggu, sistem sedang menyusun kedudukan lot ke tengah paparan.</p>
         </div>
 
         <img id="logoPuoRef" src="image_247e7c.png" style="display:none;">
@@ -220,10 +219,8 @@
             var map = L.map('map', { 
                 zoomControl: false, 
                 attributionControl: false, 
-                preferCanvas: true, // Canvas membantu prestasi jika banyak lot
-                trackResize: true,
-                updateWhenIdle: true,
-                updateWhenZooming: false
+                preferCanvas: true,
+                trackResize: true
             }).setView([2.10385, 102.5214], 19);
             
             var googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22, crossOrigin: 'anonymous' }).addTo(map);
@@ -232,13 +229,11 @@
             var highlightLayer;
             window.selectedLotData = { lot: "-", owner: "-", area: "-" };
 
-            // Optimasi: Gunakan debounce untuk update display agar tidak lag
             function updateDisplay(props) {
                 const lot = props['NO LOT'] || "-";
                 const owner = props['tsp — pe'] || props['Pemilik'] || "Jabatan Geomatik (PUO)";
                 const area = props['AREA'] ? parseFloat(props['AREA']).toFixed(3) + " m²" : "-";
 
-                // Update UI hanya jika data berbeza untuk jimat CPU
                 if(window.selectedLotData.lot !== lot) {
                     document.getElementById('res-no-lot').innerText = lot;
                     document.getElementById('res-owner').innerText = owner;
@@ -258,86 +253,39 @@
                         $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
                         
                         var center;
-                        if (layer.getBounds) {
-                            center = layer.getBounds().getCenter();
-                        }
+                        if (layer.getBounds) { center = layer.getBounds().getCenter(); }
 
                         if (center) {
                             var lotNo = feature.properties['NO LOT'];
                             var areaVal = feature.properties['AREA'] ? parseFloat(feature.properties['AREA']).toFixed(2) : "0.00";
-                            
                             var labelIcon = L.divIcon({
                                 className: 'polygon-label',
                                 html: `LOT ${lotNo}<br><span style="font-size:10px;">${areaVal} m²</span>`,
-                                iconSize: [100, 40],
-                                iconAnchor: [50, 20]
+                                iconSize: [100, 40], iconAnchor: [50, 20]
                             });
-                            
                             L.marker(center, { icon: labelIcon, interactive: false }).addTo(labelGroup);
                         }
                     }
 
-                    var lotContent = `
-                        <div style="font-size:12px;">
-                            <b>LOT: ${feature.properties['NO LOT']}</b><br>
-                            Pemilik: ${feature.properties['Pemilik'] || "PUO"}<br>
-                            Luas: ${parseFloat(feature.properties['AREA']).toFixed(2)} m²
-                        </div>
-                    `;
-                    // sticky: true kadangkala menyebabkan lag pada sesetengah browser, dikekalkan atas permintaan feature
-                    layer.bindTooltip(lotContent, { sticky: true, className: 'leaflet-tooltip-own', offset: [15, 0] });
+                    var lotContent = `<b>LOT: ${feature.properties['NO LOT']}</b><br>Luas: ${parseFloat(feature.properties['AREA']).toFixed(2)} m²`;
+                    layer.bindTooltip(lotContent, { sticky: true, className: 'leaflet-tooltip-own' });
 
                     if (feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')) {
                         var coords = layer.getLatLngs();
                         var vertices = feature.geometry.type === 'MultiPolygon' ? coords.flat(2) : coords[0];
-
                         vertices.forEach(function(latlng) {
-                            var marker = L.circleMarker(latlng, {
-                                radius: 4,      
-                                fillColor: "white", 
-                                color: "#000",      
-                                weight: 1,
-                                opacity: 1,
-                                fillOpacity: 1,
-                                interactive: true 
-                            });
-
-                            var coordContent = `
-                                <div style="text-align:center;">
-                                    <b style="color:#f1c40f;">BATU SEMPADAN</b><br>
-                                    Lat: ${latlng.lat.toFixed(7)}<br>
-                                    Lng: ${latlng.lng.toFixed(7)}
-                                </div>
-                            `;
-                            marker.bindTooltip(coordContent, { 
-                                sticky: true, 
-                                direction: 'top',
-                                className: 'leaflet-tooltip-own tooltip-coordinate',
-                                offset: [0, -10]
-                            });
-
-                            marker.addTo(batuSempadanGroup);
-
-                            marker.on('mouseover', function(e) { this.setStyle({ fillColor: '#27ae60', radius: 6 }); });
-                            marker.on('mouseout', function(e) { this.setStyle({ fillColor: 'white', radius: 4 }); });
+                            var marker = L.circleMarker(latlng, { radius: 4, fillColor: "white", color: "#000", weight: 1, fillOpacity: 1 }).addTo(batuSempadanGroup);
+                            marker.bindTooltip(`Lat: ${latlng.lat.toFixed(7)}<br>Lng: ${latlng.lng.toFixed(7)}`, { sticky: true, className: 'leaflet-tooltip-own tooltip-coordinate' });
                         });
                     }
 
-                    // OPTIMASI EVENT: Gunakan requestAnimFrame untuk visual yang lebih licin
                     layer.on('mouseover', function(e) {
-                        L.Util.requestAnimFrame(function() {
-                            var ly = e.target;
-                            ly.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
-                            updateDisplay(ly.feature.properties);
-                        });
+                        e.target.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
+                        updateDisplay(e.target.feature.properties);
                     });
 
                     layer.on('mouseout', function(e) {
-                        L.Util.requestAnimFrame(function() {
-                            if (highlightLayer !== e.target) {
-                                lotLayer.resetStyle(e.target);
-                            }
-                        });
+                        if (highlightLayer !== e.target) { lotLayer.resetStyle(e.target); }
                     });
 
                     layer.on('click', function(e) {
@@ -351,12 +299,7 @@
             }).addTo(map);
 
             var baseMaps = { "Google Satellite": googleSatellite, "Google Streets": googleStreets };
-            var overlays = { 
-                "Garisan Sempadan": lotLayer, 
-                "Batu Sempadan": batuSempadanGroup,
-                "Label Nombor Lot": labelGroup 
-            };
-            
+            var overlays = { "Garisan Sempadan": lotLayer, "Batu Sempadan": batuSempadanGroup, "Label Nombor Lot": labelGroup };
             L.control.layers(baseMaps, overlays, { collapsed: false, position: 'topright' }).addTo(map);
 
             $('#lotSearchSelector').change(function() {
@@ -377,6 +320,7 @@
                 setTimeout(() => { map.invalidateSize(); }, 350);
             });
 
+            // --- PDF GENERATION WITH CENTERING FIX ---
             async function generateFinalPDF() {
                 if(window.selectedLotData.lot === "-") { alert("Sila pilih satu lot."); return; }
                 const overlay = document.getElementById('loading-overlay');
@@ -384,23 +328,43 @@
 
                 let tempMarker;
                 if(highlightLayer) {
-                    map.fitBounds(highlightLayer.getBounds(), { padding: [140, 140], animate: false });
+                    // 1. Paksa peta ke posisi tengah lot dengan padding yang konsisten
+                    map.setView(highlightLayer.getBounds().getCenter(), map.getBoundsZoom(highlightLayer.getBounds()));
+                    map.invalidateSize(); // Penting: Segarkan saiz kontainer
+                    map.fitBounds(highlightLayer.getBounds(), { padding: [150, 150], animate: false });
+                    
                     var center = highlightLayer.getBounds().getCenter();
                     tempMarker = L.marker(center, {
-                        icon: L.divIcon({ className: 'map-label-focused', html: `<div style="background:rgba(26,37,47,0.8); color:white; padding:2px 5px; border:1px solid red; border-radius:3px; font-weight:bold; font-size:10px;">LOT ${window.selectedLotData.lot}</div>`, iconSize: [80, 30] })
+                        icon: L.divIcon({ 
+                            className: 'map-label-focused', 
+                            html: `<div style="background:rgba(26,37,47,0.8); color:white; padding:5px 10px; border:2px solid #ffff00; border-radius:5px; font-weight:bold; font-size:12px; white-space:nowrap;">LOT ${window.selectedLotData.lot}</div>`, 
+                            iconSize: [100, 40],
+                            iconAnchor: [50, 20]
+                        })
                     }).addTo(map);
                 }
 
-                await new Promise(r => setTimeout(r, 1500));
+                // 2. Tunggu sebentar untuk tiles loading & centering selesai
+                await new Promise(r => setTimeout(r, 2000));
 
                 try {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF('l', 'mm', 'a3'); 
-                    const canvas = await html2canvas(document.getElementById('map'), { useCORS: true, scale: 3 });
+                    
+                    // Gunakan html2canvas pada elemen map
+                    const canvas = await html2canvas(document.getElementById('map'), { 
+                        useCORS: true, 
+                        scale: 2,
+                        logging: false,
+                        allowTaint: true
+                    });
+                    
                     const imgData = canvas.toDataURL('image/png');
 
+                    // Lukis Frame PDF
                     doc.setDrawColor(30); doc.rect(10, 10, 400, 277); doc.line(95, 10, 95, 287); 
 
+                    // Logo
                     try {
                         doc.addImage(document.getElementById("logoPoliRef"), 'PNG', 20, 20, 25, 25);
                         doc.addImage(document.getElementById("logoPuoRef"), 'PNG', 65, 20, 22, 25);
@@ -412,8 +376,14 @@
                     doc.setFontSize(10); doc.text("Jabatan Geomatik, PUO", 52.5, 70, {align: "center"});
                     doc.line(20, 75, 85, 75);
 
+                    // Jadual Data
                     let startY = 95;
-                    const data = [["NOMBOR LOT", window.selectedLotData.lot], ["PEMILIK", window.selectedLotData.owner.toUpperCase()], ["KELUASAN", window.selectedLotData.area], ["TARIKH", new Date().toLocaleDateString('ms-MY')]];
+                    const data = [
+                        ["NOMBOR LOT", window.selectedLotData.lot], 
+                        ["PEMILIK", window.selectedLotData.owner.toUpperCase()], 
+                        ["KELUASAN", window.selectedLotData.area], 
+                        ["TARIKH", new Date().toLocaleDateString('ms-MY')]
+                    ];
                     data.forEach(row => {
                         doc.setFillColor(248, 249, 250); doc.rect(18, startY, 70, 20, 'F');
                         doc.setFontSize(8); doc.setTextColor(120); doc.text(row[0], 22, startY + 6);
@@ -421,11 +391,18 @@
                         startY += 28;
                     });
 
+                    // Masukkan Gambar Peta (Centered dalam frame kanan)
                     doc.addImage(imgData, 'PNG', 97, 14, 308, 269);
+                    
                     doc.setFontSize(8); doc.text("Sistem Saujana Putra Smart Resident © 2026", 52.5, 275, {align: "center"});
                     doc.save(`Laporan_Lot_${window.selectedLotData.lot}.pdf`);
-                } catch (err) { alert("Ralat menjana laporan."); }
-                finally { if(tempMarker) map.removeLayer(tempMarker); overlay.style.display = "none"; }
+                } catch (err) { 
+                    console.error(err);
+                    alert("Ralat menjana laporan."); 
+                } finally { 
+                    if(tempMarker) map.removeLayer(tempMarker); 
+                    overlay.style.display = "none"; 
+                }
             }
         </script>
     </body>
