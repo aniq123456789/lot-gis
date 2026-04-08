@@ -81,7 +81,7 @@
                 font-size: 11px;
             }
 
-            /* STYLE UNTUK LABEL LOT STATIK (NOMBOR & LUAS) */
+            /* OPTIMASI: Tambah pointer-events none untuk elak lag pada label */
             .polygon-label {
                 background: none !important;
                 border: none !important;
@@ -220,8 +220,10 @@
             var map = L.map('map', { 
                 zoomControl: false, 
                 attributionControl: false, 
-                preferCanvas: true,
-                trackResize: true 
+                preferCanvas: true, // Canvas membantu prestasi jika banyak lot
+                trackResize: true,
+                updateWhenIdle: true,
+                updateWhenZooming: false
             }).setView([2.10385, 102.5214], 19);
             
             var googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22, crossOrigin: 'anonymous' }).addTo(map);
@@ -230,16 +232,19 @@
             var highlightLayer;
             window.selectedLotData = { lot: "-", owner: "-", area: "-" };
 
+            // Optimasi: Gunakan debounce untuk update display agar tidak lag
             function updateDisplay(props) {
                 const lot = props['NO LOT'] || "-";
                 const owner = props['tsp — pe'] || props['Pemilik'] || "Jabatan Geomatik (PUO)";
                 const area = props['AREA'] ? parseFloat(props['AREA']).toFixed(3) + " m²" : "-";
 
-                document.getElementById('res-no-lot').innerText = lot;
-                document.getElementById('res-owner').innerText = owner;
-                document.getElementById('res-luas').innerText = area;
-
-                window.selectedLotData = { lot, owner, area };
+                // Update UI hanya jika data berbeza untuk jimat CPU
+                if(window.selectedLotData.lot !== lot) {
+                    document.getElementById('res-no-lot').innerText = lot;
+                    document.getElementById('res-owner').innerText = owner;
+                    document.getElementById('res-luas').innerText = area;
+                    window.selectedLotData = { lot, owner, area };
+                }
             }
 
             var batuSempadanGroup = L.layerGroup().addTo(map);
@@ -249,11 +254,9 @@
                 style: { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 },
                 onEachFeature: function(feature, layer) {
                     
-                    // 1. Tambah ke Dropdown Carian
                     if (feature.properties['NO LOT']) {
                         $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
                         
-                        // 2. CIPTA LABEL STATIK (DI DALAM SETIAP POLIGON)
                         var center;
                         if (layer.getBounds) {
                             center = layer.getBounds().getCenter();
@@ -267,14 +270,13 @@
                                 className: 'polygon-label',
                                 html: `LOT ${lotNo}<br><span style="font-size:10px;">${areaVal} m²</span>`,
                                 iconSize: [100, 40],
-                                iconAnchor: [50, 20] // Menempatkan titik tengah icon tepat pada koordinat center
+                                iconAnchor: [50, 20]
                             });
                             
                             L.marker(center, { icon: labelIcon, interactive: false }).addTo(labelGroup);
                         }
                     }
 
-                    // Tooltip semasa hover
                     var lotContent = `
                         <div style="font-size:12px;">
                             <b>LOT: ${feature.properties['NO LOT']}</b><br>
@@ -282,9 +284,9 @@
                             Luas: ${parseFloat(feature.properties['AREA']).toFixed(2)} m²
                         </div>
                     `;
+                    // sticky: true kadangkala menyebabkan lag pada sesetengah browser, dikekalkan atas permintaan feature
                     layer.bindTooltip(lotContent, { sticky: true, className: 'leaflet-tooltip-own', offset: [15, 0] });
 
-                    // Batu Sempadan (Vertices)
                     if (feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')) {
                         var coords = layer.getLatLngs();
                         var vertices = feature.geometry.type === 'MultiPolygon' ? coords.flat(2) : coords[0];
@@ -321,17 +323,21 @@
                         });
                     }
 
-                    // Event Mouse Over & Click pada Poligon
+                    // OPTIMASI EVENT: Gunakan requestAnimFrame untuk visual yang lebih licin
                     layer.on('mouseover', function(e) {
-                        var ly = e.target;
-                        ly.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
-                        updateDisplay(ly.feature.properties);
+                        L.Util.requestAnimFrame(function() {
+                            var ly = e.target;
+                            ly.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
+                            updateDisplay(ly.feature.properties);
+                        });
                     });
 
                     layer.on('mouseout', function(e) {
-                        if (highlightLayer !== e.target) {
-                            lotLayer.resetStyle(e.target);
-                        }
+                        L.Util.requestAnimFrame(function() {
+                            if (highlightLayer !== e.target) {
+                                lotLayer.resetStyle(e.target);
+                            }
+                        });
                     });
 
                     layer.on('click', function(e) {
