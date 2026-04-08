@@ -63,7 +63,6 @@
             .info-value { font-size: 15px; color: #2c3e50; font-weight: 700; display: block; }
             .btn-pdf { background: #27ae60; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: 700; transition: 0.3s; }
 
-            /* FIXED: Pointer-events none mengelakkan gegar */
             .leaflet-tooltip-own {
                 background: rgba(26, 37, 47, 0.9);
                 border: 1px solid #e74c3c;
@@ -82,17 +81,19 @@
                 font-size: 11px;
             }
 
-            /* STYLE UNTUK LABEL LOT STATIK */
+            /* STYLE UNTUK LABEL LOT STATIK (NOMBOR & LUAS) */
             .polygon-label {
                 background: none !important;
                 border: none !important;
                 box-shadow: none !important;
-                color: white;
-                font-weight: bold;
-                text-shadow: 2px 2px 4px #000;
+                color: #ffffff;
+                font-weight: 800;
+                text-shadow: 2px 2px 3px #000, -1px -1px 3px #000, 1px -1px 3px #000, -1px 1px 3px #000;
                 text-align: center;
                 pointer-events: none !important;
                 white-space: nowrap;
+                font-size: 12px;
+                line-height: 1.1;
             }
 
             #loading-overlay {
@@ -242,25 +243,38 @@
             }
 
             var batuSempadanGroup = L.layerGroup().addTo(map);
-            var labelGroup = L.layerGroup().addTo(map); // Group untuk label nombor & luas
+            var labelGroup = L.layerGroup().addTo(map); 
             
             var lotLayer = L.geoJson(json_LOTFINAL_0, {
                 style: { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 },
                 onEachFeature: function(feature, layer) {
+                    
+                    // 1. Tambah ke Dropdown Carian
                     if (feature.properties['NO LOT']) {
                         $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
                         
-                        // TAMBAH LABEL STATIK (NOMBOR LOT & LUAS)
-                        var center = layer.getBounds().getCenter();
-                        var areaFormatted = parseFloat(feature.properties['AREA']).toFixed(2);
-                        var labelIcon = L.divIcon({
-                            className: 'polygon-label',
-                            html: `<div>LOT ${feature.properties['NO LOT']}<br><span style="font-size:9px;">${areaFormatted} m²</span></div>`,
-                            iconSize: [100, 40]
-                        });
-                        L.marker(center, { icon: labelIcon, interactive: false }).addTo(labelGroup);
+                        // 2. CIPTA LABEL STATIK (DI DALAM SETIAP POLIGON)
+                        var center;
+                        if (layer.getBounds) {
+                            center = layer.getBounds().getCenter();
+                        }
+
+                        if (center) {
+                            var lotNo = feature.properties['NO LOT'];
+                            var areaVal = feature.properties['AREA'] ? parseFloat(feature.properties['AREA']).toFixed(2) : "0.00";
+                            
+                            var labelIcon = L.divIcon({
+                                className: 'polygon-label',
+                                html: `LOT ${lotNo}<br><span style="font-size:10px;">${areaVal} m²</span>`,
+                                iconSize: [100, 40],
+                                iconAnchor: [50, 20] // Menempatkan titik tengah icon tepat pada koordinat center
+                            });
+                            
+                            L.marker(center, { icon: labelIcon, interactive: false }).addTo(labelGroup);
+                        }
                     }
 
+                    // Tooltip semasa hover
                     var lotContent = `
                         <div style="font-size:12px;">
                             <b>LOT: ${feature.properties['NO LOT']}</b><br>
@@ -270,6 +284,7 @@
                     `;
                     layer.bindTooltip(lotContent, { sticky: true, className: 'leaflet-tooltip-own', offset: [15, 0] });
 
+                    // Batu Sempadan (Vertices)
                     if (feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')) {
                         var coords = layer.getLatLngs();
                         var vertices = feature.geometry.type === 'MultiPolygon' ? coords.flat(2) : coords[0];
@@ -301,16 +316,12 @@
 
                             marker.addTo(batuSempadanGroup);
 
-                            marker.on('mouseover', function(e) {
-                                this.setStyle({ fillColor: '#27ae60', radius: 6 });
-                            });
-
-                            marker.on('mouseout', function(e) {
-                                this.setStyle({ fillColor: 'white', radius: 4 });
-                            });
+                            marker.on('mouseover', function(e) { this.setStyle({ fillColor: '#27ae60', radius: 6 }); });
+                            marker.on('mouseout', function(e) { this.setStyle({ fillColor: 'white', radius: 4 }); });
                         });
                     }
 
+                    // Event Mouse Over & Click pada Poligon
                     layer.on('mouseover', function(e) {
                         var ly = e.target;
                         ly.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
