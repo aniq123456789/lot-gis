@@ -1,409 +1,882 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-        <title>Saujana Putra Smart Resident - PUO</title>
-        
-        <link rel="stylesheet" href="css/leaflet.css">
-        <link rel="stylesheet" href="css/fontawesome-all.min.css">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
-        
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-        <style>
-            body, html { height: 100%; margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
-            
-            /* --- LOGIN STYLING --- */
-            #login-overlay {
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
-                z-index: 10000; display: flex; align-items: center; justify-content: center;
-            }
-            .login-card {
-                background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                width: 100%; max-width: 400px; text-align: center;
-            }
-            .login-logos { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
-            .login-logos img { height: 60px; width: auto; }
-            .login-card h2 { font-weight: 800; color: #1a252f; margin-bottom: 5px; }
-            .login-card p { color: #7f8c8d; font-size: 14px; margin-bottom: 25px; }
-            .form-control { border-radius: 8px; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; }
-            .btn-login { background: #e74c3c; color: white; width: 100%; padding: 12px; border-radius: 8px; font-weight: 700; border: none; transition: 0.3s; }
-            .btn-login:hover { background: #c0392b; transform: translateY(-2px); }
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEOMATIK NOTES</title>
 
-            /* --- MAIN INTERFACE STYLING --- */
-            header {
-                position: relative; height: 130px; width: 100%; overflow: hidden;
-                display: flex; align-items: center; justify-content: center; color: white;
-                border-bottom: 5px solid #e74c3c; z-index: 1000;
-            }
-            #header-video {
-                position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%;
-                width: auto; height: auto; transform: translate(-50%, -50%);
-                z-index: -1; filter: brightness(40%); object-fit: cover;
-            }
-            .header-content { display: flex; align-items: center; width: 96%; justify-content: space-between; z-index: 1; }
-            .logo-poli, .logo-puo { height: 80px; }
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
 
-            #wrapper { display: flex; width: 100%; height: calc(100vh - 130px); }
-            #sidebar { min-width: 340px; background: #ffffff; display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.1); z-index: 1050; transition: 0.3s; }
-            #sidebar.active { margin-left: -340px; }
-            #map-container { flex-grow: 1; position: relative; background: #eee; overflow: hidden; }
-            #map { width: 100%; height: 100%; cursor: crosshair; }
-            
-            #sidebarCollapse { position: absolute; top: 15px; left: 15px; z-index: 1000; background: #1a252f; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; }
-            .card-menu { background: #fff; border-radius: 12px; padding: 15px; margin: 15px; border: 1px solid #eee; }
-            .card-menu h6 { font-weight: 700; color: #1a252f; margin-bottom: 12px; border-bottom: 2px solid #e74c3c; padding-bottom: 8px; }
-            .info-box { background: #f8f9fa; padding: 10px; border-radius: 8px; border-left: 5px solid #e74c3c; margin-bottom: 10px; transition: 0.3s; }
-            .info-label { font-size: 10px; text-transform: uppercase; color: #95a5a6; font-weight: 800; display: block; }
-            .info-value { font-size: 15px; color: #2c3e50; font-weight: 700; display: block; }
-            .btn-pdf { background: #27ae60; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: 700; transition: 0.3s; }
+body {
+    background: #f1f5f9;
+    color: #1e293b;
+}
 
-            .leaflet-tooltip-own {
-                background: rgba(26, 37, 47, 0.9);
-                border: 1px solid #e74c3c;
-                border-radius: 5px;
-                color: white;
-                padding: 10px;
-                font-family: 'Poppins', sans-serif;
-                box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-                pointer-events: none !important; 
-            }
-            
-            .tooltip-coordinate {
-                background: #27ae60 !important;
-                border: 1px solid #fff !important;
-                font-weight: bold;
-                font-size: 11px;
-            }
+/* SIDEBAR */
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    background: #10243e;
+    color: white;
+    position: fixed;
+    padding: 25px 15px;
+    overflow-y: auto;
+}
 
-            .polygon-label {
-                background: none !important;
-                border: none !important;
-                box-shadow: none !important;
-                color: #ffffff;
-                font-weight: 800;
-                text-shadow: 2px 2px 3px #000, -1px -1px 3px #000, 1px -1px 3px #000, -1px 1px 3px #000;
-                text-align: center;
-                pointer-events: none !important;
-                white-space: nowrap;
-                font-size: 12px;
-                line-height: 1.1;
-            }
+.logo {
+    font-size: 21px;
+    font-weight: bold;
+    padding: 10px;
+    margin-bottom: 8px;
+    color: #60a5fa;
+}
 
-            #loading-overlay {
-                display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); 
-                z-index: 9999; color:white; text-align:center; padding-top:20%;
-            }
+.logo small {
+    display: block;
+    color: #cbd5e1;
+    font-size: 11px;
+    margin-top: 7px;
+    font-weight: normal;
+}
 
-            @keyframes shake {
-                0% { transform: translateX(0); }
-                25% { transform: translateX(-10px); }
-                50% { transform: translateX(10px); }
-                75% { transform: translateX(-10px); }
-                100% { transform: translateX(0); }
-            }
+.sidebar h4 {
+    font-size: 11px;
+    color: #94a3b8;
+    margin: 25px 10px 12px;
+    letter-spacing: 1px;
+}
 
-            .leaflet-control-layers {
-                font-family: 'Poppins', sans-serif;
-                font-size: 13px;
-                font-weight: 600;
-                border-radius: 8px !important;
-                border: 2px solid #e74c3c !important;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-            }
-        </style>
-    </head>
-    <body>
+.sidebar button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px;
+    margin: 5px 0;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #dbeafe;
+    cursor: pointer;
+    font-size: 14px;
+}
 
-        <div id="login-overlay">
-            <div class="login-card">
-                <div class="login-logos">
-                    <img src="Poli_Logo.png" alt="Logo Politeknik">
-                    <img src="image_247e7c.png" alt="Logo PUO">
-                </div>
-                <h2>Log Masuk</h2>
-                <p>Sistem Maklumat Lot Saujana Putra</p>
-                <input type="text" id="username" class="form-control" placeholder="ID Pengguna">
-                <input type="password" id="password" class="form-control" placeholder="Kata Laluan">
-                <button class="btn-login" onclick="checkLogin()">MASUK SISTEM</button>
-                <div id="login-error" class="text-danger mt-3" style="display:none; font-size: 13px;">
-                    ID Pengguna atau Kata Laluan Salah!
-                </div>
-            </div>
+.sidebar button:hover,
+.sidebar button.active {
+    background: #2563eb;
+    color: white;
+}
+
+/* MAIN */
+.main {
+    margin-left: 250px;
+    padding: 30px;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+}
+
+.topbar h1 {
+    font-size: 25px;
+}
+
+.topbar p {
+    color: #64748b;
+    margin-top: 7px;
+    font-size: 13px;
+}
+
+.add-btn {
+    background: #2563eb;
+    color: white;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.add-btn:hover {
+    background: #1d4ed8;
+}
+
+/* STATISTICS */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    padding: 22px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px #00000008;
+}
+
+.stat-card p {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.stat-card h2 {
+    margin-top: 12px;
+    color: #2563eb;
+    font-size: 28px;
+}
+
+/* SEARCH */
+.search-area {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+.search-area input,
+.search-area select {
+    padding: 13px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: white;
+    outline: none;
+}
+
+.search-area input {
+    flex: 1;
+    min-width: 0;
+}
+
+/* NOTES */
+.section-title {
+    font-size: 19px;
+    margin-bottom: 18px;
+}
+
+.notes-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.note-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    transition: 0.2s;
+    min-width: 0;
+}
+
+.note-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px #00000012;
+}
+
+.category {
+    display: inline-block;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 11px;
+    padding: 6px 9px;
+    border-radius: 20px;
+    margin-bottom: 15px;
+}
+
+.note-card h3 {
+    font-size: 17px;
+    margin-bottom: 10px;
+}
+
+.note-card p {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.note-date {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 17px;
+}
+
+.note-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.note-actions button {
+    padding: 8px 11px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.edit-btn {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.delete-btn {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #00000080;
+    z-index: 10;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+}
+
+.modal-content {
+    background: white;
+    width: 500px;
+    max-width: 100%;
+    padding: 25px;
+    border-radius: 12px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+}
+
+.modal-content label {
+    display: block;
+    margin: 13px 0 7px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    outline: none;
+}
+
+.modal-content textarea {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.modal-buttons button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.save-btn {
+    background: #2563eb;
+    color: white;
+}
+
+.cancel-btn {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+/* EMPTY */
+.empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 50px 15px;
+    color: #64748b;
+    background: white;
+    border-radius: 10px;
+}
+
+.tools {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+.tools button {
+    border: 1px solid #cbd5e1;
+    background: white;
+    padding: 10px 13px;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.tools button:hover {
+    background: #dbeafe;
+}
+
+/* RESPONSIVE */
+@media(max-width: 1000px) {
+    .notes-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 700px) {
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+    }
+
+    .main {
+        margin-left: 0;
+        padding: 20px;
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .notes-container {
+        grid-template-columns: 1fr;
+    }
+
+    .search-area {
+        flex-direction: column;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+
+    <div class="logo">
+        GEOMATIK NOTES
+        <small>YOUR DIGITAL KNOWLEDGE HUB</small>
+    </div>
+
+    <h4>MENU UTAMA</h4>
+
+    <button class="active" onclick="filterCategory('Semua Nota',this)">
+        🏠 Dashboard
+    </button>
+
+    <h4>KATEGORI NOTA</h4>
+
+    <div id="categoryMenu"></div>
+
+    <h4>PENGURUSAN</h4>
+
+    <button onclick="exportNotes()">
+        📥 Backup Nota
+    </button>
+
+    <button onclick="document.getElementById('importFile').click()">
+        📤 Import Nota
+    </button>
+
+    <input type="file" id="importFile"
+    accept=".json,application/json"
+    hidden onchange="importNotes(event)">
+
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+    <div class="topbar">
+        <div>
+            <h1>Dashboard</h1>
+            <p>Selamat datang ke pusat penyimpanan nota Geomatik.</p>
         </div>
 
-        <div id="loading-overlay">
-            <div class="spinner-border text-light mb-3"></div>
-            <h3>Menjana Laporan PDF...</h3>
-            <p>Sila tunggu, sistem sedang menyusun kedudukan lot ke tengah paparan.</p>
+        <button class="add-btn" onclick="openModal()">
+            + Tambah Nota
+        </button>
+    </div>
+
+    <!-- STATISTICS -->
+    <div class="stats">
+
+        <div class="stat-card">
+            <p>Jumlah Nota</p>
+            <h2 id="totalNotes">0</h2>
         </div>
 
-        <img id="logoPuoRef" src="image_247e7c.png" style="display:none;">
-        <img id="logoPoliRef" src="Poli_Logo.png" style="display:none;">
-
-        <header>
-            <video autoplay muted loop playsinline id="header-video">
-                <source src="video1.mp4" type="video/mp4">
-            </video>
-            <div class="header-content">
-                <img src="Poli_Logo.png" class="logo-poli">
-                <div class="text-center">
-                    <h1 class="m-0 fw-bold">Saujana Putra Smart Resident</h1>
-                    <p class="m-0 text-warning">Sistem Maklumat Lot Tanah Terdigital (Jabatan Geomatik)</p>
-                </div>
-                <img src="image_247e7c.png" class="logo-puo">
-            </div>
-        </header>
-
-        <div id="wrapper">
-            <nav id="sidebar">
-                <div class="card-menu">
-                    <h6>Butiran Lot (Hover/Klik)</h6>
-                    <div id="lotDataDisplay">
-                        <div class="info-box">
-                            <span class="info-label">Nombor Lot</span>
-                            <span id="res-no-lot" class="info-value">-</span>
-                        </div>
-                        <div class="info-box">
-                            <span class="info-label">Keluasan</span>
-                            <span id="res-luas" class="info-value">-</span>
-                        </div>
-                        <div class="info-box">
-                            <span class="info-label">Pemilik</span>
-                            <span id="res-owner" class="info-value">-</span>
-                        </div>
-                        <button class="btn btn-pdf" onclick="generateFinalPDF()">
-                            <i class="fas fa-file-download"></i> MUAT TURUN LAPORAN PDF
-                        </button>
-                    </div>
-                </div>
-                <div class="card-menu">
-                    <h6>Carian Lot</h6>
-                    <select id="lotSearchSelector" class="form-select">
-                        <option value="">-- Pilih Nombor Lot --</option>
-                    </select>
-                </div>
-            </nav>
-
-            <div id="map-container">
-                <button id="sidebarCollapse"><i class="fas fa-bars"></i></button>
-                <div id="map"></div>
-            </div>
+        <div class="stat-card">
+            <p>Jumlah Kategori</p>
+            <h2 id="totalCategories">0</h2>
         </div>
 
-        <script src="js/leaflet.js"></script>
-        <script src="data/LOTFINAL_0.js"></script>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <div class="stat-card">
+            <p>Nota Tersimpan</p>
+            <h2>✓</h2>
+        </div>
 
-        <script>
-            function checkLogin() {
-                const user = document.getElementById('username').value;
-                const pass = document.getElementById('password').value;
-                if (user === "1" && pass === "admin") {
-                    document.getElementById('login-overlay').style.display = 'none';
-                    setTimeout(() => { map.invalidateSize(); }, 500);
-                } else {
-                    document.getElementById('login-error').style.display = 'block';
-                    const card = document.querySelector('.login-card');
-                    card.style.animation = "shake 0.5s";
-                    setTimeout(() => card.style.animation = "", 500);
-                }
+    </div>
+
+    <!-- TOOLS -->
+    <div class="tools">
+        <button onclick="exportNotes()">📥 Export Data</button>
+        <button onclick="document.getElementById('importFile').click()">
+            📤 Import Data
+        </button>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-area">
+
+        <input type="text"
+        id="searchInput"
+        placeholder="🔍 Cari tajuk atau kandungan nota..."
+        oninput="renderNotes()">
+
+        <select id="categoryFilter" onchange="renderNotes()">
+            <option value="Semua Nota">Semua Kategori</option>
+        </select>
+
+    </div>
+
+    <h2 class="section-title" id="sectionTitle">
+        Semua Nota
+    </h2>
+
+    <div class="notes-container" id="notesContainer"></div>
+
+</div>
+
+<!-- MODAL TAMBAH NOTA -->
+<div class="modal" id="noteModal">
+
+    <div class="modal-content">
+
+        <h2 id="modalTitle">Tambah Nota Baharu</h2>
+
+        <form id="noteForm">
+
+            <input type="hidden" id="noteId">
+
+            <label>Tajuk Nota</label>
+            <input type="text" id="noteTitle"
+            placeholder="Contoh: Introduction to Geodesy"
+            required>
+
+            <label>Kategori</label>
+
+            <select id="noteCategory" required>
+            </select>
+
+            <label>Kandungan Nota</label>
+
+            <textarea id="noteContent"
+            placeholder="Masukkan isi nota anda di sini..."
+            required></textarea>
+
+            <div class="modal-buttons">
+
+                <button type="submit" class="save-btn">
+                    Simpan Nota
+                </button>
+
+                <button type="button" class="cancel-btn"
+                onclick="closeModal()">
+                    Batal
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+// SENARAI KATEGORI
+const categories = [
+    "Cadastral Survey",
+    "Engineering Survey",
+    "Geodesy",
+    "Survey Adjustment",
+    "Photogrammetry",
+    "Remote Sensing",
+    "GIS",
+    "Hydrographic Survey",
+    "Land Law",
+    "Land Administration",
+    "Cartography",
+    "General Geomatics"
+];
+
+// SIMPAN DATA DALAM BROWSER
+let notes = [];
+
+try {
+    const saved = localStorage.getItem("geomatikNotes");
+    notes = saved ? JSON.parse(saved) : [];
+    if (!Array.isArray(notes)) notes = [];
+} catch (error) {
+    notes = [];
+}
+
+let currentCategory = "Semua Nota";
+
+// PAPAR KATEGORI
+function setupCategories() {
+
+    const menu = document.getElementById("categoryMenu");
+    const filter = document.getElementById("categoryFilter");
+    const select = document.getElementById("noteCategory");
+
+    categories.forEach(category => {
+
+        const button = document.createElement("button");
+        button.textContent = "📁 " + category;
+
+        button.onclick = () => {
+            currentCategory = category;
+            filter.value = category;
+            document.getElementById("sectionTitle").textContent = category;
+            document.querySelectorAll(".sidebar button")
+                .forEach(b => b.classList.remove("active"));
+            button.classList.add("active");
+            renderNotes();
+        };
+
+        menu.appendChild(button);
+
+        filter.add(new Option(category, category));
+        select.add(new Option(category, category));
+
+    });
+
+}
+
+// SIMPAN NOTA
+function saveData() {
+    try {
+        localStorage.setItem("geomatikNotes", JSON.stringify(notes));
+        updateStats();
+    } catch (error) {
+        alert("Storan penuh atau tidak dapat diakses. Sila export data anda.");
+    }
+}
+
+// KEMAS KINI STATISTIK
+function updateStats() {
+
+    document.getElementById("totalNotes").textContent = notes.length;
+
+    const usedCategories = new Set(
+        notes.map(n => n.category)
+    );
+
+    document.getElementById("totalCategories").textContent =
+        usedCategories.size;
+
+}
+
+// PAPAR NOTA
+function renderNotes() {
+
+    const container = document.getElementById("notesContainer");
+
+    const search = document.getElementById("searchInput")
+        .value.toLowerCase();
+
+    const filter = document.getElementById("categoryFilter").value;
+
+    const filteredNotes = notes.filter(note => {
+
+        const matchSearch =
+            note.title.toLowerCase().includes(search) ||
+            note.content.toLowerCase().includes(search);
+
+        const matchCategory =
+            filter === "Semua Nota" ||
+            note.category === filter;
+
+        return matchSearch && matchCategory;
+
+    });
+
+    container.innerHTML = "";
+
+    if (filteredNotes.length === 0) {
+
+        container.innerHTML = `
+            <div class="empty">
+                <h3>Tiada nota dijumpai</h3>
+                <p>Tambah nota baharu untuk memulakan koleksi anda.</p>
+            </div>
+        `;
+
+        return;
+    }
+
+    filteredNotes.forEach(note => {
+
+        const card = document.createElement("div");
+        card.className = "note-card";
+
+        const category = document.createElement("span");
+        category.className = "category";
+        category.textContent = note.category;
+
+        const title = document.createElement("h3");
+        title.textContent = note.title;
+
+        const content = document.createElement("p");
+        content.textContent = note.content.length > 180
+            ? note.content.substring(0, 180) + "..."
+            : note.content;
+
+        const date = document.createElement("div");
+        date.className = "note-date";
+        date.textContent = "Dikemaskini: " + note.date;
+
+        const actions = document.createElement("div");
+        actions.className = "note-actions";
+
+        const edit = document.createElement("button");
+        edit.className = "edit-btn";
+        edit.textContent = "✏️ Edit";
+        edit.onclick = () => editNote(note.id);
+
+        const del = document.createElement("button");
+        del.className = "delete-btn";
+        del.textContent = "🗑 Padam";
+        del.onclick = () => deleteNote(note.id);
+
+        actions.append(edit, del);
+        card.append(category, title, content, date, actions);
+        container.appendChild(card);
+
+    });
+
+}
+
+// BUKA MODAL
+function openModal() {
+
+    document.getElementById("noteForm").reset();
+    document.getElementById("noteId").value = "";
+    document.getElementById("modalTitle").textContent =
+        "Tambah Nota Baharu";
+
+    document.getElementById("noteModal").style.display = "flex";
+
+}
+
+// TUTUP MODAL
+function closeModal() {
+    document.getElementById("noteModal").style.display = "none";
+}
+
+// TAMBAH DAN EDIT NOTA
+document.getElementById("noteForm").addEventListener("submit", function(e) {
+
+    e.preventDefault();
+
+    const id = document.getElementById("noteId").value;
+
+    const title = document.getElementById("noteTitle").value.trim();
+    const category = document.getElementById("noteCategory").value;
+    const content = document.getElementById("noteContent").value.trim();
+
+    if (!title || !content) return;
+
+    const date = new Date().toLocaleDateString("ms-MY");
+
+    if (id) {
+
+        const index = notes.findIndex(n => n.id === id);
+
+        if (index !== -1) {
+            notes[index] = {
+                id,
+                title,
+                category,
+                content,
+                date
+            };
+        }
+
+    } else {
+
+        notes.unshift({
+            id: Date.now().toString(),
+            title,
+            category,
+            content,
+            date
+        });
+
+    }
+
+    saveData();
+    renderNotes();
+    closeModal();
+
+});
+
+// EDIT NOTA
+function editNote(id) {
+
+    const note = notes.find(n => n.id === id);
+
+    if (!note) return;
+
+    document.getElementById("noteId").value = note.id;
+    document.getElementById("noteTitle").value = note.title;
+    document.getElementById("noteCategory").value = note.category;
+    document.getElementById("noteContent").value = note.content;
+
+    document.getElementById("modalTitle").textContent =
+        "Kemaskini Nota";
+
+    document.getElementById("noteModal").style.display = "flex";
+
+}
+
+// PADAM NOTA
+function deleteNote(id) {
+
+    if (!confirm("Adakah anda pasti mahu memadam nota ini?")) {
+        return;
+    }
+
+    notes = notes.filter(n => n.id !== id);
+
+    saveData();
+    renderNotes();
+
+}
+
+// FILTER KATEGORI
+function filterCategory(category, button) {
+
+    currentCategory = category;
+
+    document.getElementById("categoryFilter").value = category;
+
+    document.getElementById("sectionTitle").textContent = category;
+
+    document.querySelectorAll(".sidebar button")
+        .forEach(b => b.classList.remove("active"));
+
+    button.classList.add("active");
+
+    renderNotes();
+
+}
+
+// EXPORT NOTA
+function exportNotes() {
+
+    const data = JSON.stringify(notes, null, 2);
+
+    const blob = new Blob([data], {
+        type: "application/json"
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Backup_Geomatik_Notes.json";
+    a.click();
+
+    URL.revokeObjectURL(url);
+
+}
+
+// IMPORT NOTA
+function importNotes(event) {
+
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        try {
+
+            const imported = JSON.parse(e.target.result);
+
+            if (!Array.isArray(imported) ||
+                !imported.every(n =>
+                    n &&
+                    typeof n.id === "string" &&
+                    typeof n.title === "string" &&
+                    typeof n.content === "string" &&
+                    categories.includes(n.category)
+                )) {
+                throw new Error("Format tidak sah");
             }
 
-            // --- MAP LOGIC ---
-            var map = L.map('map', { 
-                zoomControl: false, 
-                attributionControl: false, 
-                preferCanvas: true,
-                trackResize: true
-            }).setView([2.10385, 102.5214], 19);
-            
-            var googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22, crossOrigin: 'anonymous' }).addTo(map);
-            var googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 22, crossOrigin: 'anonymous' });
-
-            var highlightLayer;
-            window.selectedLotData = { lot: "-", owner: "-", area: "-" };
-
-            function updateDisplay(props) {
-                const lot = props['NO LOT'] || "-";
-                const owner = props['tsp — pe'] || props['Pemilik'] || "Jabatan Geomatik (PUO)";
-                const area = props['AREA'] ? parseFloat(props['AREA']).toFixed(3) + " m²" : "-";
-
-                if(window.selectedLotData.lot !== lot) {
-                    document.getElementById('res-no-lot').innerText = lot;
-                    document.getElementById('res-owner').innerText = owner;
-                    document.getElementById('res-luas').innerText = area;
-                    window.selectedLotData = { lot, owner, area };
-                }
+            if (!confirm("Import akan menggantikan semua nota sedia ada. Teruskan?")) {
+                return;
             }
 
-            var batuSempadanGroup = L.layerGroup().addTo(map);
-            var labelGroup = L.layerGroup().addTo(map); 
-            
-            var lotLayer = L.geoJson(json_LOTFINAL_0, {
-                style: { color: 'white', weight: 1.5, fillColor: '#e74c3c', fillOpacity: 0.3 },
-                onEachFeature: function(feature, layer) {
-                    
-                    if (feature.properties['NO LOT']) {
-                        $('#lotSearchSelector').append(`<option value="${feature.properties['NO LOT']}">Lot ${feature.properties['NO LOT']}</option>`);
-                        
-                        var center;
-                        if (layer.getBounds) { center = layer.getBounds().getCenter(); }
+            notes = imported;
 
-                        if (center) {
-                            var lotNo = feature.properties['NO LOT'];
-                            var areaVal = feature.properties['AREA'] ? parseFloat(feature.properties['AREA']).toFixed(2) : "0.00";
-                            var labelIcon = L.divIcon({
-                                className: 'polygon-label',
-                                html: `LOT ${lotNo}<br><span style="font-size:10px;">${areaVal} m²</span>`,
-                                iconSize: [100, 40], iconAnchor: [50, 20]
-                            });
-                            L.marker(center, { icon: labelIcon, interactive: false }).addTo(labelGroup);
-                        }
-                    }
+            saveData();
+            renderNotes();
 
-                    var lotContent = `<b>LOT: ${feature.properties['NO LOT']}</b><br>Luas: ${parseFloat(feature.properties['AREA']).toFixed(2)} m²`;
-                    layer.bindTooltip(lotContent, { sticky: true, className: 'leaflet-tooltip-own' });
+            alert("Nota berjaya diimport!");
 
-                    if (feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')) {
-                        var coords = layer.getLatLngs();
-                        var vertices = feature.geometry.type === 'MultiPolygon' ? coords.flat(2) : coords[0];
-                        vertices.forEach(function(latlng) {
-                            var marker = L.circleMarker(latlng, { radius: 4, fillColor: "white", color: "#000", weight: 1, fillOpacity: 1 }).addTo(batuSempadanGroup);
-                            marker.bindTooltip(`Lat: ${latlng.lat.toFixed(7)}<br>Lng: ${latlng.lng.toFixed(7)}`, { sticky: true, className: 'leaflet-tooltip-own tooltip-coordinate' });
-                        });
-                    }
+        } catch (error) {
 
-                    layer.on('mouseover', function(e) {
-                        e.target.setStyle({ weight: 3, color: '#ffff00', fillOpacity: 0.6 });
-                        updateDisplay(e.target.feature.properties);
-                    });
+            alert("Fail tidak sah atau format tidak disokong.");
 
-                    layer.on('mouseout', function(e) {
-                        if (highlightLayer !== e.target) { lotLayer.resetStyle(e.target); }
-                    });
+        }
 
-                    layer.on('click', function(e) {
-                        if (highlightLayer) { lotLayer.resetStyle(highlightLayer); }
-                        highlightLayer = e.target;
-                        highlightLayer.setStyle({ weight: 5, color: '#ffff00', fillOpacity: 0.4 });
-                        map.flyToBounds(e.target.getBounds(), { padding: [100, 100] });
-                        updateDisplay(e.target.feature.properties);
-                    });
-                }
-            }).addTo(map);
+        event.target.value = "";
 
-            var baseMaps = { "Google Satellite": googleSatellite, "Google Streets": googleStreets };
-            var overlays = { "Garisan Sempadan": lotLayer, "Batu Sempadan": batuSempadanGroup, "Label Nombor Lot": labelGroup };
-            L.control.layers(baseMaps, overlays, { collapsed: false, position: 'topright' }).addTo(map);
+    };
 
-            $('#lotSearchSelector').change(function() {
-                var val = $(this).val();
-                lotLayer.eachLayer(layer => {
-                    if (layer.feature.properties['NO LOT'] == val) {
-                        if (highlightLayer) { lotLayer.resetStyle(highlightLayer); }
-                        highlightLayer = layer;
-                        highlightLayer.setStyle({ weight: 5, color: '#ffff00', fillOpacity: 0.4 });
-                        map.flyToBounds(layer.getBounds(), { padding: [100, 100] });
-                        updateDisplay(layer.feature.properties);
-                    }
-                });
-            });
+    reader.readAsText(file);
 
-            $('#sidebarCollapse').click(function() { 
-                $('#sidebar').toggleClass('active'); 
-                setTimeout(() => { map.invalidateSize(); }, 350);
-            });
+}
 
-            // --- PDF GENERATION WITH CENTERING FIX ---
-            async function generateFinalPDF() {
-                if(window.selectedLotData.lot === "-") { alert("Sila pilih satu lot."); return; }
-                const overlay = document.getElementById('loading-overlay');
-                overlay.style.display = "block";
+// PAPARAN AWAL
+setupCategories();
+updateStats();
+renderNotes();
 
-                let tempMarker;
-                if(highlightLayer) {
-                    // 1. Paksa peta ke posisi tengah lot dengan padding yang konsisten
-                    map.setView(highlightLayer.getBounds().getCenter(), map.getBoundsZoom(highlightLayer.getBounds()));
-                    map.invalidateSize(); // Penting: Segarkan saiz kontainer
-                    map.fitBounds(highlightLayer.getBounds(), { padding: [150, 150], animate: false });
-                    
-                    var center = highlightLayer.getBounds().getCenter();
-                    tempMarker = L.marker(center, {
-                        icon: L.divIcon({ 
-                            className: 'map-label-focused', 
-                            html: `<div style="background:rgba(26,37,47,0.8); color:white; padding:5px 10px; border:2px solid #ffff00; border-radius:5px; font-weight:bold; font-size:12px; white-space:nowrap;">LOT ${window.selectedLotData.lot}</div>`, 
-                            iconSize: [100, 40],
-                            iconAnchor: [50, 20]
-                        })
-                    }).addTo(map);
-                }
+</script>
 
-                // 2. Tunggu sebentar untuk tiles loading & centering selesai
-                await new Promise(r => setTimeout(r, 2000));
-
-                try {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF('l', 'mm', 'a3'); 
-                    
-                    // Gunakan html2canvas pada elemen map
-                    const canvas = await html2canvas(document.getElementById('map'), { 
-                        useCORS: true, 
-                        scale: 2,
-                        logging: false,
-                        allowTaint: true
-                    });
-                    
-                    const imgData = canvas.toDataURL('image/png');
-
-                    // Lukis Frame PDF
-                    doc.setDrawColor(30); doc.rect(10, 10, 400, 277); doc.line(95, 10, 95, 287); 
-
-                    // Logo
-                    try {
-                        doc.addImage(document.getElementById("logoPoliRef"), 'PNG', 20, 20, 25, 25);
-                        doc.addImage(document.getElementById("logoPuoRef"), 'PNG', 65, 20, 22, 25);
-                    } catch(e) {}
-
-                    doc.setFont("times", "bold"); doc.setFontSize(16);
-                    doc.text("LAPORAN RASMI", 52.5, 55, {align: "center"});
-                    doc.text("LOT TANAH DIGITAL", 52.5, 62, {align: "center"});
-                    doc.setFontSize(10); doc.text("Jabatan Geomatik, PUO", 52.5, 70, {align: "center"});
-                    doc.line(20, 75, 85, 75);
-
-                    // Jadual Data
-                    let startY = 95;
-                    const data = [
-                        ["NOMBOR LOT", window.selectedLotData.lot], 
-                        ["PEMILIK", window.selectedLotData.owner.toUpperCase()], 
-                        ["KELUASAN", window.selectedLotData.area], 
-                        ["TARIKH", new Date().toLocaleDateString('ms-MY')]
-                    ];
-                    data.forEach(row => {
-                        doc.setFillColor(248, 249, 250); doc.rect(18, startY, 70, 20, 'F');
-                        doc.setFontSize(8); doc.setTextColor(120); doc.text(row[0], 22, startY + 6);
-                        doc.setFontSize(11); doc.setTextColor(0); doc.text(doc.splitTextToSize(row[1], 65), 22, startY + 13);
-                        startY += 28;
-                    });
-
-                    // Masukkan Gambar Peta (Centered dalam frame kanan)
-                    doc.addImage(imgData, 'PNG', 97, 14, 308, 269);
-                    
-                    doc.setFontSize(8); doc.text("Sistem Saujana Putra Smart Resident © 2026", 52.5, 275, {align: "center"});
-                    doc.save(`Laporan_Lot_${window.selectedLotData.lot}.pdf`);
-                } catch (err) { 
-                    console.error(err);
-                    alert("Ralat menjana laporan."); 
-                } finally { 
-                    if(tempMarker) map.removeLayer(tempMarker); 
-                    overlay.style.display = "none"; 
-                }
-            }
-        </script>
-    </body>
+</body>
 </html>
